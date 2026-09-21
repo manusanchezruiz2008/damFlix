@@ -1000,10 +1000,6 @@ async function uploadDocument() {
 
     try {
 
-        /* =================================================
-           RUTA
-        ================================================= */
-
         const moduleFolder =
             cleanPathPart(
                 moduleName
@@ -1048,94 +1044,6 @@ async function uploadDocument() {
         );
 
 
-        /* =================================================
-           TIPO DE ARCHIVO
-        ================================================= */
-
-        const extension =
-            file.name
-                .split(".")
-                .pop()
-                .toLowerCase();
-
-
-        let contentType =
-            file.type;
-
-
-        if (
-            extension === "html" ||
-            extension === "htm"
-        ) {
-
-            contentType =
-                "text/html";
-
-        }
-
-
-        else if (
-            extension === "css"
-        ) {
-
-            contentType =
-                "text/css";
-
-        }
-
-
-        else if (
-            extension === "js"
-        ) {
-
-            contentType =
-                "text/javascript";
-
-        }
-
-
-        else if (
-            extension === "json"
-        ) {
-
-            contentType =
-                "application/json";
-
-        }
-
-
-        else if (
-            extension === "svg"
-        ) {
-
-            contentType =
-                "image/svg+xml";
-
-        }
-
-
-        else if (
-            extension === "txt"
-        ) {
-
-            contentType =
-                "text/plain";
-
-        }
-
-
-        if (!contentType) {
-
-            contentType =
-                "application/octet-stream";
-
-        }
-
-
-        /* =================================================
-           SUBIR A STORAGE
-        ================================================= */
-
         const {
             error: uploadError
         } =
@@ -1155,7 +1063,8 @@ async function uploadDocument() {
                             false,
 
                         contentType:
-                            contentType
+                            file.type ||
+                            "application/octet-stream"
                     }
                 );
 
@@ -1166,10 +1075,6 @@ async function uploadDocument() {
 
         }
 
-
-        /* =================================================
-           URL PÚBLICA
-        ================================================= */
 
         const {
             data: urlData
@@ -1187,10 +1092,6 @@ async function uploadDocument() {
         const publicUrl =
             urlData.publicUrl;
 
-
-        /* =================================================
-           GUARDAR EN FILES
-        ================================================= */
 
         const {
             error: databaseError
@@ -1303,7 +1204,7 @@ async function uploadDocument() {
 
 
 /* =========================================================
-   ABRIR DOCUMENTO
+   ABRIR ARCHIVO
 ========================================================= */
 
 function openDocument(item) {
@@ -1319,42 +1220,13 @@ function openDocument(item) {
     }
 
 
-    const path =
-        item.path ||
-        item.name ||
-        "";
-
-
-    const extension =
-        path
-            .split("?")[0]
-            .split(".")
-            .pop()
-            .toLowerCase();
-
-
-    /* =================================================
-       HTML
-    ================================================= */
-
-    if (
-        extension === "html" ||
-        extension === "htm"
-    ) {
-
-        window.open(
-            item.url,
-            "_blank"
-        );
-
-        return;
-
-    }
-
-
-    /* =================================================
-       RESTO
-    ================================================= */
+    /*
+     * Abrimos directamente la URL pública.
+     *
+     * Para HTML:
+     * si Supabase lo sirve como text/html,
+     * el navegador mostrará la página.
+     */
 
     window.open(
         item.url,
@@ -1467,7 +1339,7 @@ async function toggleCompleted(item) {
 
 
 /* =========================================================
-   ELIMINAR
+   ELIMINAR DOCUMENTO
 ========================================================= */
 
 async function deleteDocument(item) {
@@ -1554,7 +1426,7 @@ async function deleteDocument(item) {
 
 
 /* =========================================================
-   LIMPIAR RUTA
+   LIMPIAR CARPETAS
 ========================================================= */
 
 function cleanPathPart(text) {
@@ -1594,7 +1466,7 @@ function cleanPathPart(text) {
 
 
 /* =========================================================
-   LIMPIAR NOMBRE
+   LIMPIAR NOMBRE ARCHIVO
 ========================================================= */
 
 function cleanFileName(fileName) {
@@ -1837,7 +1709,7 @@ function getFileIcon(path) {
 
 
 /* =========================================================
-   ESCAPAR HTML
+   EVITAR HTML EN LOS TEXTOS
 ========================================================= */
 
 function escapeHTML(text) {
@@ -1857,6 +1729,6 @@ function escapeHTML(text) {
 }
 ```
 
-**Importante:** después de sustituir el `app.js`, elimina el HTML que ya subiste y **vuelve a subirlo**. El nuevo código le pondrá `Content-Type: text/html` al archivo.
+**Importante:** este vuelve a la lógica estable que tenías. No uses el código anterior que añadía `?download=false`.
 
-Y si ese HTML utiliza otros archivos (`style.css`, imágenes, `script.js`, etc.), esos archivos tienen que estar también disponibles mediante una ruta que el HTML pueda cargar.
+Si después quieres que los HTML se ejecuten como páginas, lo hacemos **aparte y sin volver a tocar todo el `app.js`**.
