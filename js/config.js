@@ -3,7 +3,7 @@
 // La anon key / publishable key está pensada para usarse en cliente si tus políticas RLS están bien configuradas.
 
 window.DAMFLIX_CONFIG = {
-  supabaseUrl: "PEGA_AQUI_TU_PROJECT_URL",
-  supabaseAnonKey: "PEGA_AQUI_TU_ANON_O_PUBLISHABLE_KEY",
+  supabaseUrl: "https://sriifbloyfivdyfisixn.supabase.co/rest/v1/",
+  supabaseAnonKey: "sb_publishable_l26P02t68OP-dPzfgQcxeg_9xrc7aJT",
   bucket: "files"
 };
