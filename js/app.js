@@ -17,47 +17,29 @@ const sampleDocs = [
     topic: "Tema 1",
     type: "Apuntes",
     url: "",
-    path: "",
     favorite: true,
     status: "Pendiente",
     demo: true
   }
 ];
 
-let docs =
-  JSON.parse(
-    localStorage.getItem("damflix_docs") || "null"
-  ) || sampleDocs;
+let docs = JSON.parse(localStorage.getItem("damflix_docs") || "null") || sampleDocs;
 
 let activeModule = "Todos";
 let activeFilter = "Todos";
 
+const moduleRow = document.getElementById("moduleRow");
+const documentGrid = document.getElementById("documentGrid");
+const searchInput = document.getElementById("searchInput");
+const moduleSelect = document.getElementById("module");
+const modal = document.getElementById("uploadModal");
+const uploadStatus = document.getElementById("uploadStatus");
 
-const moduleRow =
-  document.getElementById("moduleRow");
-
-const documentGrid =
-  document.getElementById("documentGrid");
-
-const searchInput =
-  document.getElementById("searchInput");
-
-const moduleSelect =
-  document.getElementById("module");
-
-const modal =
-  document.getElementById("uploadModal");
-
-const uploadStatus =
-  document.getElementById("uploadStatus");
-
-
-/* =====================================
+/* =========================
    SUPABASE
-===================================== */
+========================= */
 
-const CONFIG =
-  window.DAMFLIX_CONFIG || {};
+const CONFIG = window.DAMFLIX_CONFIG || {};
 
 const configured =
   CONFIG.supabaseUrl &&
@@ -75,14 +57,13 @@ const supabaseClient =
     : null;
 
 
-/* =====================================
+/* =========================
    MÓDULOS
-===================================== */
+========================= */
 
 modules.forEach(([icon, name]) => {
 
-  const card =
-    document.createElement("div");
+  const card = document.createElement("div");
 
   card.className = "module-card";
 
@@ -98,22 +79,17 @@ modules.forEach(([icon, name]) => {
 
     document
       .getElementById("biblioteca")
-      .scrollIntoView({
-        behavior: "smooth"
-      });
+      .scrollIntoView();
 
     renderDocs();
-
   };
 
   moduleRow.appendChild(card);
 
 
-  const option =
-    document.createElement("option");
+  const option = document.createElement("option");
 
   option.value = name;
-
   option.textContent = name;
 
   moduleSelect.appendChild(option);
@@ -121,9 +97,9 @@ modules.forEach(([icon, name]) => {
 });
 
 
-/* =====================================
+/* =========================
    GUARDAR DOCUMENTOS
-===================================== */
+========================= */
 
 function saveDocs() {
 
@@ -135,15 +111,15 @@ function saveDocs() {
 }
 
 
-/* =====================================
-   SEGURIDAD
-===================================== */
+/* =========================
+   SEGURIDAD HTML
+========================= */
 
 function escapeHtml(text) {
 
-  return String(text).replace(
+  return String(text || "").replace(
     /[&<>"']/g,
-    function(character) {
+    function (c) {
 
       return {
         "&": "&amp;",
@@ -151,7 +127,7 @@ function escapeHtml(text) {
         ">": "&gt;",
         '"': "&quot;",
         "'": "&#039;"
-      }[character];
+      }[c];
 
     }
   );
@@ -159,80 +135,73 @@ function escapeHtml(text) {
 }
 
 
-/* =====================================
+/* =========================
    MOSTRAR DOCUMENTOS
-===================================== */
+========================= */
 
 function renderDocs() {
 
-  const q =
-    searchInput.value
-      .trim()
-      .toLowerCase();
+  const q = searchInput.value
+    .trim()
+    .toLowerCase();
 
 
-  const filtered =
-    docs.filter(doc => {
+  const filtered = docs.filter(doc => {
 
-      const text = [
-        doc.title,
-        doc.module,
-        doc.topic,
-        doc.type
-      ]
-        .join(" ")
-        .toLowerCase();
+    const matchesSearch = [
 
+      doc.title || "",
 
-      const matchesSearch =
-        text.includes(q);
+      doc.module || "",
 
+      doc.topic || "",
 
-      const matchesModule =
-        activeModule === "Todos" ||
-        doc.module === activeModule;
+      doc.type || ""
+
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
 
 
-      let matchesFilter = true;
+    const matchesModule =
+      activeModule === "Todos" ||
+      doc.module === activeModule;
 
 
-      if (
-        activeFilter === "Favoritos"
-      ) {
-
-        matchesFilter =
-          !!doc.favorite;
-
-      }
+    let matchesFilter = true;
 
 
-      if (
-        activeFilter === "Pendiente"
-      ) {
+    if (activeFilter === "Favoritos") {
 
-        matchesFilter =
-          doc.status === "Pendiente";
+      matchesFilter = !!doc.favorite;
 
-      }
+    }
 
 
-      if (
-        activeFilter === "Completado"
-      ) {
+    if (activeFilter === "Pendiente") {
 
-        matchesFilter =
-          doc.status === "Completado";
+      matchesFilter =
+        doc.status === "Pendiente";
 
-      }
+    }
 
 
-      return (
-        matchesSearch &&
-        matchesModule &&
-        matchesFilter
-      );
+    if (activeFilter === "Completado") {
 
-    });
+      matchesFilter =
+        doc.status === "Completado";
+
+    }
+
+
+    return (
+      matchesSearch &&
+      matchesModule &&
+      matchesFilter
+    );
+
+  });
 
 
   documentGrid.innerHTML = "";
@@ -260,26 +229,34 @@ function renderDocs() {
 
         📕
 
+
         <button
           class="favorite ${doc.favorite ? "on" : ""}"
-          type="button"
+          title="Favorito"
         >
           ★
         </button>
 
       </div>
 
+
       <div class="doc-body">
 
         <span class="badge">
+
           ${escapeHtml(
             doc.status || "Pendiente"
           )}
+
         </span>
 
+
         <h3>
+
           ${escapeHtml(doc.title)}
+
         </h3>
+
 
         <div class="meta">
 
@@ -297,42 +274,37 @@ function renderDocs() {
 
         </div>
 
+
         <div class="doc-actions">
 
-          <button
-            class="open-btn"
-            type="button"
-          >
+          <button class="open-btn">
+
             ${doc.demo ? "Demo" : "Abrir"}
+
           </button>
 
-          <button
-            class="progress-btn"
-            type="button"
-          >
+
+          <button class="progress-btn">
+
             ${
               doc.status === "Completado"
                 ? "↩"
                 : "✓"
             }
+
           </button>
+
 
           ${
             doc.demo
               ? ""
-              : `
-                <button
-                  class="delete-btn"
-                  type="button"
-                >
-                  ×
-                </button>
-              `
+              : '<button class="delete-btn">×</button>'
           }
 
         </div>
 
       </div>
+
     `;
 
 
@@ -342,8 +314,7 @@ function renderDocs() {
       .querySelector(".favorite")
       .onclick = () => {
 
-        doc.favorite =
-          !doc.favorite;
+        doc.favorite = !doc.favorite;
 
         saveDocs();
 
@@ -379,14 +350,10 @@ function renderDocs() {
         if (doc.demo) {
 
           alert(
-            "Este es el documento de demostración."
+            "Sube tu primer PDF con el botón '+ Subir PDF'."
           );
 
-          return;
-
-        }
-
-        if (doc.url) {
+        } else if (doc.url) {
 
           window.open(
             doc.url,
@@ -402,32 +369,32 @@ function renderDocs() {
     /* ELIMINAR */
 
     const deleteBtn =
-      card.querySelector(
-        ".delete-btn"
-      );
+      card.querySelector(".delete-btn");
 
 
     if (deleteBtn) {
 
-      deleteBtn.onclick =
-        async () => {
+      deleteBtn.onclick = async () => {
+
+        if (
+          !confirm(
+            `¿Eliminar "${doc.title}" de DAMFLIX?`
+          )
+        ) {
+
+          return;
+
+        }
+
+
+        try {
 
           if (
-            !confirm(
-              `¿Eliminar "${doc.title}" de DAMFLIX?`
-            )
+            doc.path &&
+            supabaseClient
           ) {
-            return;
-          }
 
-
-          try {
-
-            if (
-              doc.path &&
-              supabaseClient
-            ) {
-
+            const { error } =
               await supabaseClient
                 .storage
                 .from(CONFIG.bucket)
@@ -435,27 +402,35 @@ function renderDocs() {
                   doc.path
                 ]);
 
+
+            if (error) {
+
+              console.warn(
+                "No se pudo eliminar el archivo de Supabase:",
+                error
+              );
+
             }
-
-          } catch (error) {
-
-            console.error(error);
 
           }
 
+        } catch (error) {
 
-          docs =
-            docs.filter(
-              item =>
-                item.id !== doc.id
-            );
+          console.warn(error);
+
+        }
 
 
-          saveDocs();
+        docs = docs.filter(
+          x => x.id !== doc.id
+        );
 
-          renderDocs();
 
-        };
+        saveDocs();
+
+        renderDocs();
+
+      };
 
     }
 
@@ -467,34 +442,28 @@ function renderDocs() {
 }
 
 
-/* =====================================
+/* =========================
    FILTROS
-===================================== */
+========================= */
 
 document
   .querySelectorAll(".filter")
-  .forEach(button => {
+  .forEach(btn => {
 
-    button.onclick = () => {
+    btn.onclick = () => {
 
       document
         .querySelectorAll(".filter")
-        .forEach(item => {
-
-          item.classList.remove(
-            "active"
-          );
-
-        });
+        .forEach(b =>
+          b.classList.remove("active")
+        );
 
 
-      button.classList.add(
-        "active"
-      );
+      btn.classList.add("active");
 
 
       activeFilter =
-        button.dataset.filter;
+        btn.dataset.filter;
 
 
       renderDocs();
@@ -504,9 +473,9 @@ document
   });
 
 
-/* =====================================
+/* =========================
    BUSCADOR
-===================================== */
+========================= */
 
 searchInput.addEventListener(
   "input",
@@ -514,15 +483,13 @@ searchInput.addEventListener(
 );
 
 
-/* =====================================
+/* =========================
    MODAL
-===================================== */
+========================= */
 
 function openModal() {
 
-  modal.classList.remove(
-    "hidden"
-  );
+  modal.classList.remove("hidden");
 
   modal.setAttribute(
     "aria-hidden",
@@ -534,9 +501,7 @@ function openModal() {
 
 function closeModal() {
 
-  modal.classList.add(
-    "hidden"
-  );
+  modal.classList.add("hidden");
 
   modal.setAttribute(
     "aria-hidden",
@@ -565,11 +530,9 @@ document
 
 modal.addEventListener(
   "click",
-  event => {
+  e => {
 
-    if (
-      event.target === modal
-    ) {
+    if (e.target === modal) {
 
       closeModal();
 
@@ -579,17 +542,17 @@ modal.addEventListener(
 );
 
 
-/* =====================================
+/* =========================
    SUBIR PDF
-===================================== */
+========================= */
 
 document
   .getElementById("uploadForm")
   .addEventListener(
     "submit",
-    async event => {
+    async e => {
 
-      event.preventDefault();
+      e.preventDefault();
 
 
       if (!supabaseClient) {
@@ -603,8 +566,7 @@ document
 
 
       const file =
-        document
-          .getElementById("file")
+        document.getElementById("file")
           .files[0];
 
 
@@ -644,70 +606,102 @@ document
       }
 
 
+      if (!title) {
+
+        uploadStatus.textContent =
+          "Escribe un título.";
+
+        return;
+
+      }
+
+
+      if (!module) {
+
+        uploadStatus.textContent =
+          "Selecciona un módulo.";
+
+        return;
+
+      }
+
+
+      if (!topic) {
+
+        uploadStatus.textContent =
+          "Escribe el tema.";
+
+        return;
+
+      }
+
+
+      /* Comprobar PDF */
+
+      if (
+        file.type !== "application/pdf" &&
+        !file.name.toLowerCase().endsWith(".pdf")
+      ) {
+
+        uploadStatus.textContent =
+          "Solo puedes subir archivos PDF.";
+
+        return;
+
+      }
+
+
       uploadStatus.textContent =
         "Subiendo PDF...";
 
 
       try {
 
-
-        /* LIMPIAR NOMBRES */
-
-        const moduleFolder =
-          module
-            .normalize("NFD")
-            .replace(
-              /[\u0300-\u036f]/g,
-              ""
-            )
-            .replace(
-              /[^a-zA-Z0-9_-]/g,
-              "_"
-            );
-
-
-        const topicFolder =
-          topic
-            .normalize("NFD")
-            .replace(
-              /[\u0300-\u036f]/g,
-              ""
-            )
-            .replace(
-              /[^a-zA-Z0-9_-]/g,
-              "_"
-            );
-
+        /* Nombre seguro */
 
         const safeName =
-          file.name
-            .normalize("NFD")
+          file.name.replace(
+            /[^a-zA-Z0-9._-]/g,
+            "_"
+          );
+
+
+        /* Limpiar nombres de carpetas */
+
+        const safeModule =
+          module
             .replace(
-              /[\u0300-\u036f]/g,
-              ""
-            )
-            .replace(
-              /[^a-zA-Z0-9._-]/g,
+              /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]/g,
               "_"
             );
 
 
-        /* RUTA FINAL */
+        const safeTopic =
+          topic
+            .replace(
+              /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]/g,
+              "_"
+            );
+
+
+        /*
+          RUTA DEL ARCHIVO
+
+          Ejemplo:
+
+          Programación/
+          Tema_1/
+          1727000000_apuntes.pdf
+        */
 
         const path =
-          `${moduleFolder}/${topicFolder}/${Date.now()}_${safeName}`;
+          `${safeModule}/${safeTopic}/${Date.now()}_${safeName}`;
 
 
-        console.log(
-          "Subiendo:",
-          path
-        );
-
-
-        /* SUBIR */
+        /* SUBIR A SUPABASE */
 
         const {
-          error
+          error: uploadError
         } =
           await supabaseClient
             .storage
@@ -724,14 +718,14 @@ document
             );
 
 
-        if (error) {
+        if (uploadError) {
 
-          throw error;
+          throw uploadError;
 
         }
 
 
-        /* URL */
+        /* URL PÚBLICA */
 
         const {
           data
@@ -742,7 +736,7 @@ document
             .getPublicUrl(path);
 
 
-        /* GUARDAR DOCUMENTO */
+        /* GUARDAR EN LA BIBLIOTECA */
 
         docs.unshift({
 
@@ -752,8 +746,8 @@ document
               : String(Date.now()),
 
           title:
-            title ||
-            file.name,
+
+            title,
 
           module:
 
@@ -781,11 +775,7 @@ document
 
           status:
 
-            "Pendiente",
-
-          demo:
-
-            false
+            "Pendiente"
 
         });
 
@@ -795,7 +785,9 @@ document
         renderDocs();
 
 
-        event.target.reset();
+        /* Limpiar formulario */
+
+        e.target.reset();
 
 
         uploadStatus.textContent =
@@ -804,23 +796,20 @@ document
 
         setTimeout(
           closeModal,
-          800
+          700
         );
 
 
       } catch (error) {
 
-        console.error(
-          "ERROR:",
-          error
-        );
+        console.error(error);
 
 
         uploadStatus.textContent =
           "Error: " +
           (
             error.message ||
-            "No se pudo subir el PDF."
+            "No se pudo subir el archivo."
           );
 
       }
@@ -829,9 +818,9 @@ document
   );
 
 
-/* =====================================
-   INICIAR
-===================================== */
+/* =========================
+   INICIO
+========================= */
 
 renderDocs();
 
