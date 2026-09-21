@@ -2,367 +2,265 @@
 <html lang="es">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>DAMFLIX | Tu biblioteca de DAM</title>
+    <title>DAMFLIX | Tu biblioteca de DAM</title>
 
-  <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="js/config.js"></script>
+    <script src="js/app.js" defer></script>
 </head>
 
 <body>
 
-  <header class="topbar">
+    <!-- HEADER -->
 
-    <a class="logo" href="index.html">
-      DAMFLIX
-    </a>
+    <header>
 
-    <nav>
-      <a href="#modulos">Módulos</a>
-      <a href="#biblioteca">Biblioteca</a>
-
-      <button
-        id="openUpload"
-        class="btn small"
-        type="button"
-      >
-        + Subir PDF
-      </button>
-    </nav>
-
-  </header>
-
-
-  <main>
-
-    <!-- HERO -->
-
-    <section class="hero">
-
-      <div class="hero-content">
-
-        <p class="eyebrow">
-          1º DAM · 2026/2027
-        </p>
-
-        <h1>
-          Todo tu curso, en un solo sitio.
-        </h1>
-
-        <p>
-          Guarda temas, apuntes, ejercicios y PDFs.
-          Encuentra lo que necesitas sin rebuscar por carpetas.
-        </p>
-
-        <div class="hero-actions">
-
-          <a
-            href="#biblioteca"
-            class="btn"
-          >
-            ▶ Ver biblioteca
-          </a>
-
-          <button
-            id="heroUpload"
-            class="btn secondary"
-            type="button"
-          >
-            + Subir archivo
-          </button>
-
+        <div class="logo">
+            DAMFLIX
         </div>
 
-      </div>
+        <nav>
+            <a href="#modulos">Módulos</a>
+            <a href="#biblioteca">Biblioteca</a>
 
-    </section>
+            <button id="openUpload">
+                + Subir archivo
+            </button>
+        </nav>
 
-
-    <!-- MÓDULOS -->
-
-    <section
-      class="section"
-      id="modulos"
-    >
-
-      <div class="section-heading">
-
-        <h2>Módulos</h2>
-
-        <span>
-          Elige una asignatura
-        </span>
-
-      </div>
-
-      <div
-        id="moduleRow"
-        class="card-row"
-      ></div>
-
-    </section>
+    </header>
 
 
-    <!-- BIBLIOTECA -->
+    <!-- CONTENIDO PRINCIPAL -->
 
-    <section
-      class="section"
-      id="biblioteca"
-    >
+    <main>
 
-      <div class="section-heading library-heading">
+        <!-- MÓDULOS -->
 
-        <div>
+        <section id="modulos">
 
-          <h2>
-            Mi biblioteca
-          </h2>
+            <div class="section-title">
 
-          <span>
-            Todos tus documentos
-          </span>
+                <h1>Módulos</h1>
+
+                <select id="module">
+                    <option value="">Elige una asignatura</option>
+                </select>
+
+            </div>
+
+            <div id="moduleRow" class="module-row"></div>
+
+        </section>
+
+
+        <!-- BIBLIOTECA -->
+
+        <section id="biblioteca">
+
+            <div class="section-title">
+
+                <div>
+                    <h2>Mi biblioteca</h2>
+                    <p>Todos tus documentos</p>
+                </div>
+
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Buscar apuntes, tema, módulo..."
+                >
+
+            </div>
+
+
+            <!-- FILTROS -->
+
+            <div class="filters">
+
+                <button class="filter active" data-filter="all">
+                    Todos
+                </button>
+
+                <button class="filter" data-filter="favorite">
+                    ★ Favoritos
+                </button>
+
+                <button class="filter" data-filter="pending">
+                    Pendientes
+                </button>
+
+                <button class="filter" data-filter="completed">
+                    Completados
+                </button>
+
+            </div>
+
+
+            <!-- DOCUMENTOS -->
+
+            <div id="documentGrid" class="document-grid"></div>
+
+        </section>
+
+    </main>
+
+
+    <!-- MODAL SUBIR ARCHIVO -->
+
+    <div id="uploadModal" class="modal">
+
+        <div class="modal-content">
+
+            <button id="closeUpload" class="close">
+                ×
+            </button>
+
+            <h2>Subir documento</h2>
+
+            <p class="modal-description">
+                Organiza tu archivo por módulo y tema.
+            </p>
+
+
+            <form id="uploadForm">
+
+                <!-- TÍTULO -->
+
+                <label for="title">
+                    Título
+                </label>
+
+                <input
+                    type="text"
+                    id="title"
+                    placeholder="Ej: Variables - Entornos de Desarrollo"
+                    required
+                >
+
+
+                <!-- MÓDULO -->
+
+                <label for="uploadModule">
+                    Módulo
+                </label>
+
+                <select
+                    id="uploadModule"
+                    required
+                >
+
+                    <option value="">
+                        Selecciona un módulo
+                    </option>
+
+                </select>
+
+
+                <!-- TEMA -->
+
+                <label for="topic">
+                    Tema
+                </label>
+
+                <input
+                    type="text"
+                    id="topic"
+                    placeholder="Ej: Tema 1"
+                    required
+                >
+
+
+                <!-- TIPO -->
+
+                <label for="type">
+                    Tipo
+                </label>
+
+                <select
+                    id="type"
+                    required
+                >
+
+                    <option value="Apuntes">
+                        Apuntes
+                    </option>
+
+                    <option value="Ejercicios">
+                        Ejercicios
+                    </option>
+
+                    <option value="Examen">
+                        Examen
+                    </option>
+
+                    <option value="Práctica">
+                        Práctica
+                    </option>
+
+                    <option value="Trabajo">
+                        Trabajo
+                    </option>
+
+                    <option value="Otro">
+                        Otro
+                    </option>
+
+                </select>
+
+
+                <!-- ARCHIVO -->
+
+                <label for="file">
+                    Archivo
+                </label>
+
+                <input
+                    type="file"
+                    id="file"
+                    required
+                >
+
+                <small class="file-info">
+                    Puedes subir PDF, Word, PowerPoint, imágenes,
+                    ZIP, TXT, código y otros archivos.
+                </small>
+
+
+                <!-- ESTADO -->
+
+                <div id="uploadStatus"></div>
+
+
+                <!-- BOTÓN -->
+
+                <button
+                    type="submit"
+                    class="upload-button"
+                >
+                    Subir a DAMFLIX
+                </button>
+
+            </form>
 
         </div>
-
-        <input
-          id="searchInput"
-          type="search"
-          placeholder="Buscar apuntes, tema, módulo..."
-        >
-
-      </div>
-
-
-      <div class="filters">
-
-        <button
-          class="filter active"
-          data-filter="Todos"
-          type="button"
-        >
-          Todos
-        </button>
-
-        <button
-          class="filter"
-          data-filter="Favoritos"
-          type="button"
-        >
-          ★ Favoritos
-        </button>
-
-        <button
-          class="filter"
-          data-filter="Pendiente"
-          type="button"
-        >
-          Pendientes
-        </button>
-
-        <button
-          class="filter"
-          data-filter="Completado"
-          type="button"
-        >
-          Completados
-        </button>
-
-      </div>
-
-
-      <div
-        id="documentGrid"
-        class="document-grid"
-      ></div>
-
-
-      <p
-        id="emptyState"
-        class="empty hidden"
-      >
-        Todavía no hay documentos que coincidan.
-      </p>
-
-    </section>
-
-  </main>
-
-
-  <!-- =====================================
-       VENTANA PARA SUBIR PDF
-  ====================================== -->
-
-  <div
-    id="uploadModal"
-    class="modal hidden"
-    aria-hidden="true"
-  >
-
-    <div class="modal-card">
-
-      <button
-        id="closeUpload"
-        class="close"
-        type="button"
-      >
-        ×
-      </button>
-
-
-      <h2>
-        Subir documento
-      </h2>
-
-      <p class="muted">
-        Organiza tu PDF por módulo y tema.
-      </p>
-
-
-      <form id="uploadForm">
-
-
-        <!-- TÍTULO -->
-
-        <label>
-          Título
-
-          <input
-            id="title"
-            type="text"
-            required
-            placeholder="Ej. Tema 1 - Variables"
-          >
-
-        </label>
-
-
-        <!-- MÓDULO -->
-
-        <label>
-          Módulo
-
-          <select
-            id="module"
-            required
-          >
-
-            <option value="">
-              Selecciona un módulo
-            </option>
-
-          </select>
-
-        </label>
-
-
-        <!-- TEMA -->
-
-        <label>
-          Tema
-
-          <input
-            id="topic"
-            type="text"
-            required
-            placeholder="Ej. Tema 1"
-          >
-
-        </label>
-
-
-        <!-- TIPO -->
-
-        <label>
-          Tipo
-
-          <select
-            id="type"
-            required
-          >
-
-            <option value="Apuntes">
-              Apuntes
-            </option>
-
-            <option value="Tema">
-              Tema
-            </option>
-
-            <option value="Ejercicio">
-              Ejercicio
-            </option>
-
-            <option value="Examen">
-              Examen
-            </option>
-
-            <option value="Resumen">
-              Resumen
-            </option>
-
-            <option value="Proyecto">
-              Proyecto
-            </option>
-
-          </select>
-
-        </label>
-
-
-        <!-- ARCHIVO -->
-
-        <label>
-          Archivo PDF
-
-          <input
-            id="file"
-            type="file"
-            accept=".pdf,application/pdf"
-            required
-          >
-
-        </label>
-
-
-        <!-- BOTÓN -->
-
-        <button
-          class="btn full"
-          type="submit"
-        >
-          Subir a DAMFLIX
-        </button>
-
-
-        <p
-          id="uploadStatus"
-          class="status"
-        ></p>
-
-      </form>
 
     </div>
 
-  </div>
 
+    <!-- FOOTER -->
 
-  <footer>
-    DAMFLIX · Hecho para organizar 1º DAM
-  </footer>
+    <footer>
 
+        DAMFLIX · Hecho para organizar 1º DAM
 
-  <!-- SUPABASE -->
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- CONFIGURACIÓN -->
-
-  <script src="js/config.js"></script>
-
-  <!-- DAMFLIX -->
-
-  <script src="js/app.js"></script>
+    </footer>
 
 </body>
 
