@@ -1,309 +1,591 @@
-const modules = [
-  ["💻", "Programación"],
-  ["🗄️", "Bases de Datos"],
-  ["🛠️", "Entornos de Desarrollo"],
-  ["🖥️", "Sistemas Informáticos"],
-  ["🌐", "Lenguajes de Marcas"],
-  ["📱", "Digitalización"],
-  ["💼", "IPE I"],
-  ["♻️", "Sostenibilidad"]
-];
-
-const sampleDocs = [
-  {
-    id: "demo-1",
-    title: "Bienvenido a DAMFLIX",
-    module: "Programación",
-    topic: "Tema 1",
-    type: "Apuntes",
-    url: "",
-    favorite: true,
-    status: "Pendiente",
-    demo: true
-  }
-];
-
-let docs = JSON.parse(localStorage.getItem("damflix_docs") || "null") || sampleDocs;
-
-let activeModule = "Todos";
-let activeFilter = "Todos";
-
-const moduleRow = document.getElementById("moduleRow");
-const documentGrid = document.getElementById("documentGrid");
-const searchInput = document.getElementById("searchInput");
-const moduleSelect = document.getElementById("module");
-const modal = document.getElementById("uploadModal");
-const uploadStatus = document.getElementById("uploadStatus");
-
-/* =========================
-   SUPABASE
-========================= */
-
-const CONFIG = window.DAMFLIX_CONFIG || {};
-
-const configured =
-  CONFIG.supabaseUrl &&
-  CONFIG.supabaseAnonKey &&
-  CONFIG.bucket &&
-  !CONFIG.supabaseUrl.includes("PEGA_AQUI") &&
-  !CONFIG.supabaseAnonKey.includes("PEGA_AQUI");
-
-const supabaseClient =
-  configured && window.supabase
-    ? window.supabase.createClient(
-        CONFIG.supabaseUrl,
-        CONFIG.supabaseAnonKey
-      )
-    : null;
+const supabaseClient = window.supabase.createClient(
+    CONFIG.supabaseUrl,
+    CONFIG.supabaseAnonKey
+);
 
 
-/* =========================
+/* =========================================================
    MÓDULOS
-========================= */
+========================================================= */
 
-modules.forEach(([icon, name]) => {
+const modules = [
+    {
+        name: "Programación",
+        icon: "💻"
+    },
+    {
+        name: "Bases de Datos",
+        icon: "🗄️"
+    },
+    {
+        name: "Entornos de Desarrollo",
+        icon: "🛠️"
+    },
+    {
+        name: "Sistemas Informáticos",
+        icon: "🖥️"
+    },
+    {
+        name: "Digitalización",
+        icon: "🔢"
+    },
+    {
+        name: "IPE I",
+        icon: "💼"
+    },
+    {
+        name: "Sostenibilidad",
+        icon: "♻️"
+    }
+];
 
-  const card = document.createElement("div");
 
-  card.className = "module-card";
+/* =========================================================
+   VARIABLES
+========================================================= */
 
-  card.innerHTML = `
-    <div class="icon">${icon}</div>
-    <h3>${name}</h3>
-    <p>Ver documentos</p>
-  `;
+let documents = [];
 
-  card.onclick = () => {
+let currentModule = "";
 
-    activeModule = name;
-
-    document
-      .getElementById("biblioteca")
-      .scrollIntoView();
-
-    renderDocs();
-  };
-
-  moduleRow.appendChild(card);
+let currentFilter = "all";
 
 
-  const option = document.createElement("option");
+/* =========================================================
+   INICIAR APLICACIÓN
+========================================================= */
 
-  option.value = name;
-  option.textContent = name;
+document.addEventListener("DOMContentLoaded", function () {
 
-  moduleSelect.appendChild(option);
+    checkSupabase();
+
+    loadModules();
+
+    loadDocuments();
+
+    setupEvents();
 
 });
 
 
-/* =========================
-   GUARDAR DOCUMENTOS
-========================= */
+/* =========================================================
+   COMPROBAR SUPABASE
+========================================================= */
 
-function saveDocs() {
+function checkSupabase() {
 
-  localStorage.setItem(
-    "damflix_docs",
-    JSON.stringify(docs)
-  );
+    if (!CONFIG.supabaseUrl) {
 
-}
+        console.error("Falta supabaseUrl en config.js");
 
-
-/* =========================
-   SEGURIDAD HTML
-========================= */
-
-function escapeHtml(text) {
-
-  return String(text || "").replace(
-    /[&<>"']/g,
-    function (c) {
-
-      return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      }[c];
+        return false;
 
     }
-  );
+
+    if (!CONFIG.supabaseAnonKey) {
+
+        console.error("Falta supabaseAnonKey en config.js");
+
+        return false;
+
+    }
+
+    if (!CONFIG.bucket) {
+
+        console.error("Falta el nombre del bucket en config.js");
+
+        return false;
+
+    }
+
+    return true;
+}
+
+
+/* =========================================================
+   CARGAR MÓDULOS
+========================================================= */
+
+function loadModules() {
+
+    const moduleRow =
+        document.getElementById("moduleRow");
+
+    const moduleSelect =
+        document.getElementById("module");
+
+    const uploadModule =
+        document.getElementById("uploadModule");
+
+
+    modules.forEach(function (module) {
+
+        /* TARJETA DEL MÓDULO */
+
+        const card = document.createElement("div");
+
+        card.className = "module-card";
+
+        card.innerHTML = `
+            <div class="module-icon">
+                ${module.icon}
+            </div>
+
+            <h3>
+                ${module.name}
+            </h3>
+
+            <p>
+                Ver documentos
+            </p>
+        `;
+
+
+        card.addEventListener("click", function () {
+
+            currentModule = module.name;
+
+            document.getElementById("module").value =
+                module.name;
+
+            loadDocuments();
+
+            document
+                .getElementById("biblioteca")
+                .scrollIntoView({
+                    behavior: "smooth"
+                });
+
+        });
+
+
+        moduleRow.appendChild(card);
+
+
+        /* SELECT PRINCIPAL */
+
+        const option =
+            document.createElement("option");
+
+        option.value = module.name;
+
+        option.textContent = module.name;
+
+        moduleSelect.appendChild(option);
+
+
+        /* SELECT DEL MODAL */
+
+        const uploadOption =
+            document.createElement("option");
+
+        uploadOption.value = module.name;
+
+        uploadOption.textContent = module.name;
+
+        uploadModule.appendChild(uploadOption);
+
+    });
 
 }
 
 
-/* =========================
+/* =========================================================
+   EVENTOS
+========================================================= */
+
+function setupEvents() {
+
+
+    /* ABRIR MODAL */
+
+    document
+        .getElementById("openUpload")
+        .addEventListener("click", function () {
+
+            document
+                .getElementById("uploadModal")
+                .classList.add("show");
+
+        });
+
+
+    /* CERRAR MODAL */
+
+    document
+        .getElementById("closeUpload")
+        .addEventListener("click", closeModal);
+
+
+    /* CLICK FUERA DEL MODAL */
+
+    document
+        .getElementById("uploadModal")
+        .addEventListener("click", function (event) {
+
+            if (event.target === this) {
+
+                closeModal();
+
+            }
+
+        });
+
+
+    /* FORMULARIO */
+
+    document
+        .getElementById("uploadForm")
+        .addEventListener("submit", function (event) {
+
+            event.preventDefault();
+
+            uploadDocument();
+
+        });
+
+
+    /* SELECT DE MÓDULO */
+
+    document
+        .getElementById("module")
+        .addEventListener("change", function () {
+
+            currentModule = this.value;
+
+            loadDocuments();
+
+        });
+
+
+    /* BUSCADOR */
+
+    document
+        .getElementById("searchInput")
+        .addEventListener("input", function () {
+
+            renderDocuments();
+
+        });
+
+
+    /* FILTROS */
+
+    document
+        .querySelectorAll(".filter")
+        .forEach(function (button) {
+
+            button.addEventListener("click", function () {
+
+                document
+                    .querySelectorAll(".filter")
+                    .forEach(function (btn) {
+
+                        btn.classList.remove("active");
+
+                    });
+
+                this.classList.add("active");
+
+                currentFilter =
+                    this.dataset.filter;
+
+                renderDocuments();
+
+            });
+
+        });
+
+}
+
+
+/* =========================================================
+   CERRAR MODAL
+========================================================= */
+
+function closeModal() {
+
+    document
+        .getElementById("uploadModal")
+        .classList.remove("show");
+
+}
+
+
+/* =========================================================
+   CARGAR DOCUMENTOS
+========================================================= */
+
+async function loadDocuments() {
+
+    const grid =
+        document.getElementById("documentGrid");
+
+    grid.innerHTML =
+        "<p>Cargando documentos...</p>";
+
+
+    try {
+
+        const { data, error } =
+            await supabaseClient
+                .from("files")
+                .select("*")
+                .order("created_at", {
+                    ascending: false
+                });
+
+
+        if (error) {
+
+            console.error(error);
+
+            grid.innerHTML =
+                "<p>No se pudieron cargar los documentos.</p>";
+
+            return;
+
+        }
+
+
+        documents = data || [];
+
+
+        renderDocuments();
+
+    } catch (error) {
+
+        console.error(error);
+
+        grid.innerHTML =
+            "<p>Error al cargar los documentos.</p>";
+
+    }
+
+}
+
+
+/* =========================================================
    MOSTRAR DOCUMENTOS
-========================= */
+========================================================= */
 
-function renderDocs() {
+function renderDocuments() {
 
-  const q = searchInput.value
-    .trim()
-    .toLowerCase();
+    const grid =
+        document.getElementById("documentGrid");
 
+    const searchInput =
+        document.getElementById("searchInput");
 
-  const filtered = docs.filter(doc => {
-
-    const matchesSearch = [
-
-      doc.title || "",
-
-      doc.module || "",
-
-      doc.topic || "",
-
-      doc.type || ""
-
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(q);
+    const search =
+        searchInput.value.toLowerCase().trim();
 
 
-    const matchesModule =
-      activeModule === "Todos" ||
-      doc.module === activeModule;
+    let filtered =
+        documents.slice();
 
 
-    let matchesFilter = true;
+    /* FILTRAR POR MÓDULO */
 
+    if (currentModule !== "") {
 
-    if (activeFilter === "Favoritos") {
+        filtered =
+            filtered.filter(function (document) {
 
-      matchesFilter = !!doc.favorite;
+                return document.module === currentModule;
+
+            });
 
     }
 
 
-    if (activeFilter === "Pendiente") {
+    /* BUSCADOR */
 
-      matchesFilter =
-        doc.status === "Pendiente";
+    if (search !== "") {
+
+        filtered =
+            filtered.filter(function (document) {
+
+                const text = `
+
+                    ${document.title || ""}
+
+                    ${document.module || ""}
+
+                    ${document.topic || ""}
+
+                    ${document.type || ""}
+
+                `.toLowerCase();
+
+
+                return text.includes(search);
+
+            });
 
     }
 
 
-    if (activeFilter === "Completado") {
+    /* FAVORITOS */
 
-      matchesFilter =
-        doc.status === "Completado";
+    if (currentFilter === "favorite") {
+
+        filtered =
+            filtered.filter(function (document) {
+
+                return document.favorite === true;
+
+            });
 
     }
 
 
-    return (
-      matchesSearch &&
-      matchesModule &&
-      matchesFilter
-    );
+    /* PENDIENTES */
 
-  });
+    if (currentFilter === "pending") {
 
+        filtered =
+            filtered.filter(function (document) {
 
-  documentGrid.innerHTML = "";
+                return document.completed !== true;
 
+            });
 
-  document
-    .getElementById("emptyState")
-    .classList.toggle(
-      "hidden",
-      filtered.length > 0
-    );
+    }
 
 
-  filtered.forEach(doc => {
+    /* COMPLETADOS */
+
+    if (currentFilter === "completed") {
+
+        filtered =
+            filtered.filter(function (document) {
+
+                return document.completed === true;
+
+            });
+
+    }
+
+
+    /* NO HAY DOCUMENTOS */
+
+    if (filtered.length === 0) {
+
+        grid.innerHTML = `
+            <div class="empty">
+                No hay documentos para mostrar.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    /* CREAR TARJETAS */
+
+    grid.innerHTML = "";
+
+
+    filtered.forEach(function (document) {
+
+        const card =
+            createDocumentCard(document);
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+
+/* =========================================================
+   CREAR TARJETA
+========================================================= */
+
+function createDocumentCard(document) {
 
     const card =
-      document.createElement("article");
+        document.createElement("div");
 
-    card.className = "doc-card";
+    card.className =
+        "document-card";
+
+
+    const completed =
+        document.completed === true;
+
+
+    const favorite =
+        document.favorite === true;
 
 
     card.innerHTML = `
 
-      <div class="doc-cover">
+        <div class="document-top">
 
-        📕
+            <span class="document-type">
+                ${escapeHTML(document.type || "Archivo")}
+            </span>
+
+            <button
+                class="favorite-button"
+                title="Favorito"
+            >
+                ${favorite ? "★" : "☆"}
+            </button>
+
+        </div>
 
 
-        <button
-          class="favorite ${doc.favorite ? "on" : ""}"
-          title="Favorito"
-        >
-          ★
-        </button>
-
-      </div>
-
-
-      <div class="doc-body">
-
-        <span class="badge">
-
-          ${escapeHtml(
-            doc.status || "Pendiente"
-          )}
-
-        </span>
+        <div class="document-icon">
+            ${getFileIcon(document)}
+        </div>
 
 
         <h3>
-
-          ${escapeHtml(doc.title)}
-
+            ${escapeHTML(document.title || "Sin título")}
         </h3>
 
 
-        <div class="meta">
+        <p class="document-info">
 
-          ${escapeHtml(doc.module)}
+            ${escapeHTML(document.module || "")}
 
-          ·
+            ·
 
-          ${escapeHtml(
-            doc.topic || "Sin tema"
-          )}
+            ${escapeHTML(document.topic || "Sin tema")}
 
-          ·
-
-          ${escapeHtml(doc.type)}
-
-        </div>
+        </p>
 
 
-        <div class="doc-actions">
+        <div class="document-status">
 
-          <button class="open-btn">
-
-            ${doc.demo ? "Demo" : "Abrir"}
-
-          </button>
-
-
-          <button class="progress-btn">
-
-            ${
-              doc.status === "Completado"
-                ? "↩"
-                : "✓"
+            ${completed
+                ? "Completado"
+                : "Pendiente"
             }
 
-          </button>
-
-
-          ${
-            doc.demo
-              ? ""
-              : '<button class="delete-btn">×</button>'
-          }
-
         </div>
 
-      </div>
+
+        <div class="document-actions">
+
+            <button class="open-document">
+                Abrir
+            </button>
+
+            <button class="complete-document">
+
+                ${completed
+                    ? "Pendiente"
+                    : "Completar"
+                }
+
+            </button>
+
+        </div>
 
     `;
 
@@ -311,519 +593,593 @@ function renderDocs() {
     /* FAVORITO */
 
     card
-      .querySelector(".favorite")
-      .onclick = () => {
+        .querySelector(".favorite-button")
+        .addEventListener("click", function () {
 
-        doc.favorite = !doc.favorite;
+            toggleFavorite(document);
 
-        saveDocs();
-
-        renderDocs();
-
-      };
+        });
 
 
     /* COMPLETADO */
 
     card
-      .querySelector(".progress-btn")
-      .onclick = () => {
+        .querySelector(".complete-document")
+        .addEventListener("click", function () {
 
-        doc.status =
-          doc.status === "Completado"
-            ? "Pendiente"
-            : "Completado";
+            toggleCompleted(document);
 
-        saveDocs();
-
-        renderDocs();
-
-      };
+        });
 
 
     /* ABRIR */
 
     card
-      .querySelector(".open-btn")
-      .onclick = () => {
+        .querySelector(".open-document")
+        .addEventListener("click", function () {
 
-        if (doc.demo) {
+            openDocument(document);
 
-          alert(
-            "Sube tu primer PDF con el botón '+ Subir PDF'."
-          );
-
-        } else if (doc.url) {
-
-          window.open(
-            doc.url,
-            "_blank",
-            "noopener,noreferrer"
-          );
-
-        }
-
-      };
+        });
 
 
-    /* ELIMINAR */
+    return card;
 
-    const deleteBtn =
-      card.querySelector(".delete-btn");
-
-
-    if (deleteBtn) {
-
-      deleteBtn.onclick = async () => {
-
-        if (
-          !confirm(
-            `¿Eliminar "${doc.title}" de DAMFLIX?`
-          )
-        ) {
-
-          return;
-
-        }
+}
 
 
-        try {
+/* =========================================================
+   ICONO DEL ARCHIVO
+========================================================= */
 
-          if (
-            doc.path &&
-            supabaseClient
-          ) {
+function getFileIcon(document) {
 
-            const { error } =
-              await supabaseClient
-                .storage
-                .from(CONFIG.bucket)
-                .remove([
-                  doc.path
-                ]);
+    const path =
+        document.path ||
+        document.url ||
+        "";
 
-
-            if (error) {
-
-              console.warn(
-                "No se pudo eliminar el archivo de Supabase:",
-                error
-              );
-
-            }
-
-          }
-
-        } catch (error) {
-
-          console.warn(error);
-
-        }
+    const extension =
+        path
+            .split("?")[0]
+            .split(".")
+            .pop()
+            .toLowerCase();
 
 
-        docs = docs.filter(
-          x => x.id !== doc.id
-        );
+    if (extension === "pdf") {
+        return "📕";
+    }
+
+    if (
+        extension === "doc" ||
+        extension === "docx"
+    ) {
+        return "📘";
+    }
+
+    if (
+        extension === "xls" ||
+        extension === "xlsx"
+    ) {
+        return "📗";
+    }
+
+    if (
+        extension === "ppt" ||
+        extension === "pptx"
+    ) {
+        return "📙";
+    }
+
+    if (
+        extension === "jpg" ||
+        extension === "jpeg" ||
+        extension === "png" ||
+        extension === "gif" ||
+        extension === "webp"
+    ) {
+        return "🖼️";
+    }
+
+    if (
+        extension === "zip" ||
+        extension === "rar" ||
+        extension === "7z"
+    ) {
+        return "🗜️";
+    }
+
+    if (
+        extension === "html" ||
+        extension === "css" ||
+        extension === "js" ||
+        extension === "php" ||
+        extension === "java" ||
+        extension === "py"
+    ) {
+        return "💻";
+    }
+
+    if (
+        extension === "txt" ||
+        extension === "md"
+    ) {
+        return "📄";
+    }
+
+    return "📁";
+
+}
 
 
-        saveDocs();
+/* =========================================================
+   SUBIR ARCHIVO
+========================================================= */
 
-        renderDocs();
+async function uploadDocument() {
 
-      };
+    const title =
+        document.getElementById("title")
+            .value
+            .trim();
+
+
+    const module =
+        document.getElementById("uploadModule")
+            .value;
+
+
+    const topic =
+        document.getElementById("topic")
+            .value
+            .trim();
+
+
+    const type =
+        document.getElementById("type")
+            .value;
+
+
+    const fileInput =
+        document.getElementById("file");
+
+
+    const file =
+        fileInput.files[0];
+
+
+    const status =
+        document.getElementById("uploadStatus");
+
+
+    status.textContent = "";
+
+
+    /* VALIDACIONES */
+
+    if (!title) {
+
+        status.textContent =
+            "Escribe un título.";
+
+        return;
 
     }
 
 
-    documentGrid.appendChild(card);
+    if (!module) {
 
-  });
+        status.textContent =
+            "Selecciona un módulo.";
 
-}
-
-
-/* =========================
-   FILTROS
-========================= */
-
-document
-  .querySelectorAll(".filter")
-  .forEach(btn => {
-
-    btn.onclick = () => {
-
-      document
-        .querySelectorAll(".filter")
-        .forEach(b =>
-          b.classList.remove("active")
-        );
-
-
-      btn.classList.add("active");
-
-
-      activeFilter =
-        btn.dataset.filter;
-
-
-      renderDocs();
-
-    };
-
-  });
-
-
-/* =========================
-   BUSCADOR
-========================= */
-
-searchInput.addEventListener(
-  "input",
-  renderDocs
-);
-
-
-/* =========================
-   MODAL
-========================= */
-
-function openModal() {
-
-  modal.classList.remove("hidden");
-
-  modal.setAttribute(
-    "aria-hidden",
-    "false"
-  );
-
-}
-
-
-function closeModal() {
-
-  modal.classList.add("hidden");
-
-  modal.setAttribute(
-    "aria-hidden",
-    "true"
-  );
-
-  uploadStatus.textContent = "";
-
-}
-
-
-document
-  .getElementById("openUpload")
-  .onclick = openModal;
-
-
-document
-  .getElementById("heroUpload")
-  .onclick = openModal;
-
-
-document
-  .getElementById("closeUpload")
-  .onclick = closeModal;
-
-
-modal.addEventListener(
-  "click",
-  e => {
-
-    if (e.target === modal) {
-
-      closeModal();
+        return;
 
     }
 
-  }
-);
 
+    if (!topic) {
 
-/* =========================
-   SUBIR PDF
-========================= */
-
-document
-  .getElementById("uploadForm")
-  .addEventListener(
-    "submit",
-    async e => {
-
-      e.preventDefault();
-
-
-      if (!supabaseClient) {
-
-        uploadStatus.textContent =
-          "Supabase no está configurado correctamente.";
+        status.textContent =
+            "Escribe un tema.";
 
         return;
 
-      }
+    }
 
 
-      const file =
-        document.getElementById("file")
-          .files[0];
+    if (!file) {
 
-
-      const title =
-        document
-          .getElementById("title")
-          .value
-          .trim();
-
-
-      const module =
-        document
-          .getElementById("module")
-          .value;
-
-
-      const topic =
-        document
-          .getElementById("topic")
-          .value
-          .trim();
-
-
-      const type =
-        document
-          .getElementById("type")
-          .value;
-
-
-      if (!file) {
-
-        uploadStatus.textContent =
-          "Selecciona un PDF.";
+        status.textContent =
+            "Selecciona un archivo.";
 
         return;
 
-      }
+    }
 
 
-      if (!title) {
+    try {
 
-        uploadStatus.textContent =
-          "Escribe un título.";
-
-        return;
-
-      }
-
-
-      if (!module) {
-
-        uploadStatus.textContent =
-          "Selecciona un módulo.";
-
-        return;
-
-      }
-
-
-      if (!topic) {
-
-        uploadStatus.textContent =
-          "Escribe el tema.";
-
-        return;
-
-      }
-
-
-      /* Comprobar PDF */
-
-      if (
-        file.type !== "application/pdf" &&
-        !file.name.toLowerCase().endsWith(".pdf")
-      ) {
-
-        uploadStatus.textContent =
-          "Solo puedes subir archivos PDF.";
-
-        return;
-
-      }
-
-
-      uploadStatus.textContent =
-        "Subiendo PDF...";
-
-
-      try {
-
-        /* Nombre seguro */
-
-        const safeName =
-          file.name.replace(
-            /[^a-zA-Z0-9._-]/g,
-            "_"
-          );
-
-
-        /* Limpiar nombres de carpetas */
-
-        const safeModule =
-          module
-            .replace(
-              /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]/g,
-              "_"
-            );
-
-
-        const safeTopic =
-          topic
-            .replace(
-              /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]/g,
-              "_"
-            );
+        status.textContent =
+            "Subiendo archivo...";
 
 
         /*
-          RUTA DEL ARCHIVO
+         * LIMPIAMOS LOS NOMBRES
+         */
 
-          Ejemplo:
+        const moduleFolder =
+            cleanPath(module);
 
-          Programación/
-          Tema_1/
-          1727000000_apuntes.pdf
-        */
+
+        const topicFolder =
+            cleanPath(topic);
+
+
+        const fileName =
+            cleanFileName(file.name);
+
+
+        /*
+         * RUTA FINAL
+         *
+         * IMPORTANTE:
+         * NO empieza por /
+         */
 
         const path =
-          `${safeModule}/${safeTopic}/${Date.now()}_${safeName}`;
+            moduleFolder +
+            "/" +
+            topicFolder +
+            "/" +
+            Date.now() +
+            "_" +
+            fileName;
 
 
-        /* SUBIR A SUPABASE */
+        console.log("Bucket:", CONFIG.bucket);
+
+        console.log("Ruta:", path);
+
+
+        /*
+         * SUBIR A STORAGE
+         */
 
         const {
-          error: uploadError
-        } =
-          await supabaseClient
+            data: uploadData,
+            error: uploadError
+        } = await supabaseClient
             .storage
             .from(CONFIG.bucket)
             .upload(
-              path,
-              file,
-              {
-                cacheControl: "3600",
-                upsert: false,
-                contentType:
-                  "application/pdf"
-              }
+                path,
+                file,
+                {
+                    cacheControl: "3600",
+                    upsert: false,
+                    contentType:
+                        file.type ||
+                        "application/octet-stream"
+                }
             );
 
 
         if (uploadError) {
 
-          throw uploadError;
+            console.error(
+                "Error Storage:",
+                uploadError
+            );
+
+            status.textContent =
+                "Error: " +
+                uploadError.message;
+
+            return;
 
         }
 
 
-        /* URL PÚBLICA */
+        /*
+         * OBTENER URL
+         */
 
         const {
-          data
-        } =
-          supabaseClient
+            data: publicData
+        } = supabaseClient
             .storage
             .from(CONFIG.bucket)
             .getPublicUrl(path);
 
 
-        /* GUARDAR EN LA BIBLIOTECA */
+        if (
+            !publicData ||
+            !publicData.publicUrl
+        ) {
 
-        docs.unshift({
+            status.textContent =
+                "El archivo se subió, pero no se pudo obtener su URL.";
 
-          id:
-            crypto.randomUUID
-              ? crypto.randomUUID()
-              : String(Date.now()),
+            return;
 
-          title:
-
-            title,
-
-          module:
-
-            module,
-
-          topic:
-
-            topic,
-
-          type:
-
-            type,
-
-          url:
-
-            data.publicUrl,
-
-          path:
-
-            path,
-
-          favorite:
-
-            false,
-
-          status:
-
-            "Pendiente"
-
-        });
+        }
 
 
-        saveDocs();
+        /*
+         * GUARDAR EN BASE DE DATOS
+         */
 
-        renderDocs();
+        const {
+            data: databaseData,
+            error: databaseError
+        } = await supabaseClient
+            .from("files")
+            .insert([
+
+                {
+                    title: title,
+                    module: module,
+                    topic: topic,
+                    type: type,
+                    url: publicData.publicUrl,
+                    path: path,
+                    favorite: false,
+                    completed: false
+                }
+
+            ])
+            .select();
 
 
-        /* Limpiar formulario */
+        if (databaseError) {
 
-        e.target.reset();
+            console.error(
+                "Error Base de Datos:",
+                databaseError
+            );
 
 
-        uploadStatus.textContent =
-          "PDF subido correctamente.";
+            /*
+             * EL ARCHIVO YA SE SUBIÓ.
+             * NO LO BORRAMOS.
+             */
+
+            status.textContent =
+                "El archivo se subió, pero hubo un error al guardarlo en la biblioteca.";
+
+            return;
+
+        }
 
 
-        setTimeout(
-          closeModal,
-          700
+        /*
+         * TODO CORRECTO
+         */
+
+        status.textContent =
+            "Archivo subido correctamente.";
+
+
+        /*
+         * LIMPIAR FORMULARIO
+         */
+
+        document
+            .getElementById("uploadForm")
+            .reset();
+
+
+        /*
+         * ACTUALIZAR BIBLIOTECA
+         */
+
+        await loadDocuments();
+
+
+        /*
+         * CERRAR MODAL
+         */
+
+        setTimeout(function () {
+
+            closeModal();
+
+            status.textContent = "";
+
+        }, 700);
+
+
+    } catch (error) {
+
+        console.error(
+            "Error general:",
+            error
         );
 
 
-      } catch (error) {
+        status.textContent =
+            "Error al subir el archivo: " +
+            error.message;
+
+    }
+
+}
+
+
+/* =========================================================
+   LIMPIAR RUTA
+========================================================= */
+
+function cleanPath(text) {
+
+    return text
+
+        .normalize("NFD")
+
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        )
+
+        .replace(
+            /[^a-zA-Z0-9_-]/g,
+            "_"
+        )
+
+        .replace(
+            /^_+|_+$/g,
+            ""
+        )
+
+        || "sin_nombre";
+
+}
+
+
+/* =========================================================
+   LIMPIAR NOMBRE DE ARCHIVO
+========================================================= */
+
+function cleanFileName(text) {
+
+    return text
+
+        .normalize("NFD")
+
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        )
+
+        .replace(
+            /[^a-zA-Z0-9._-]/g,
+            "_"
+        )
+
+        .replace(
+            /^_+|_+$/g,
+            ""
+        )
+
+        || "archivo";
+
+}
+
+
+/* =========================================================
+   ABRIR DOCUMENTO
+========================================================= */
+
+function openDocument(document) {
+
+    if (!document.url) {
+
+        alert(
+            "Este documento no tiene una URL."
+        );
+
+        return;
+
+    }
+
+
+    window.open(
+        document.url,
+        "_blank"
+    );
+
+}
+
+
+/* =========================================================
+   FAVORITO
+========================================================= */
+
+async function toggleFavorite(document) {
+
+    const newValue =
+        document.favorite !== true;
+
+
+    const {
+        error
+    } = await supabaseClient
+        .from("files")
+        .update({
+            favorite: newValue
+        })
+        .eq("id", document.id);
+
+
+    if (error) {
 
         console.error(error);
 
-
-        uploadStatus.textContent =
-          "Error: " +
-          (
-            error.message ||
-            "No se pudo subir el archivo."
-          );
-
-      }
+        return;
 
     }
-  );
 
 
-/* =========================
-   INICIO
-========================= */
+    document.favorite =
+        newValue;
 
-renderDocs();
 
-console.log(
-  "DAMFLIX cargado correctamente"
-);
+    renderDocuments();
+
+}
+
+
+/* =========================================================
+   COMPLETADO
+========================================================= */
+
+async function toggleCompleted(document) {
+
+    const newValue =
+        document.completed !== true;
+
+
+    const {
+        error
+    } = await supabaseClient
+        .from("files")
+        .update({
+            completed: newValue
+        })
+        .eq("id", document.id);
+
+
+    if (error) {
+
+        console.error(error);
+
+        return;
+
+    }
+
+
+    document.completed =
+        newValue;
+
+
+    renderDocuments();
+
+}
+
+
+/* =========================================================
+   SEGURIDAD HTML
+========================================================= */
+
+function escapeHTML(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        text;
+
+    return div.innerHTML;
+
+}
