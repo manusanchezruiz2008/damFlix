@@ -887,7 +887,7 @@ function createDocumentCard(item) {
 
 
 /* =========================================================
-   SUBIR CUALQUIER ARCHIVO
+   SUBIR ARCHIVO
 ========================================================= */
 
 async function uploadDocument() {
@@ -1044,7 +1044,7 @@ async function uploadDocument() {
 
 
         /* =================================================
-           DETECTAR CONTENT-TYPE
+           CONTENT TYPE
         ================================================= */
 
         const extension =
@@ -1127,18 +1127,11 @@ async function uploadDocument() {
         }
 
 
-        console.log(
-            "Content-Type:",
-            contentType
-        );
-
-
         /* =================================================
-           SUBIR ARCHIVO
+           SUBIR
         ================================================= */
 
         const {
-            data: uploadData,
             error: uploadError
         } =
             await supabaseClient
@@ -1170,7 +1163,7 @@ async function uploadDocument() {
 
 
         /* =================================================
-           URL PÚBLICA
+           URL
         ================================================= */
 
         const {
@@ -1191,7 +1184,7 @@ async function uploadDocument() {
 
 
         /* =================================================
-           GUARDAR EN TABLA
+           BASE DE DATOS
         ================================================= */
 
         const {
@@ -1305,7 +1298,7 @@ async function uploadDocument() {
 
 
 /* =========================================================
-   ABRIR ARCHIVO
+   ABRIR DOCUMENTO
 ========================================================= */
 
 function openDocument(item) {
@@ -1320,6 +1313,58 @@ function openDocument(item) {
 
     }
 
+
+    const path =
+        item.path ||
+        item.name ||
+        "";
+
+
+    const extension =
+        path
+            .split("?")[0]
+            .split(".")
+            .pop()
+            .toLowerCase();
+
+
+    /* =================================================
+       HTML
+    ================================================= */
+
+    if (
+        extension === "html" ||
+        extension === "htm"
+    ) {
+
+        let htmlUrl =
+            item.url;
+
+
+        /*
+         * Forzamos visualización
+         * en el navegador.
+         */
+
+        htmlUrl =
+            htmlUrl +
+            "?download=false";
+
+
+        window.open(
+            htmlUrl,
+            "_blank"
+        );
+
+
+        return;
+
+    }
+
+
+    /* =================================================
+       RESTO DE ARCHIVOS
+    ================================================= */
 
     window.open(
         item.url,
@@ -1559,7 +1604,7 @@ function cleanPathPart(text) {
 
 
 /* =========================================================
-   LIMPIAR NOMBRE ARCHIVO
+   LIMPIAR NOMBRE
 ========================================================= */
 
 function cleanFileName(fileName) {
@@ -1650,7 +1695,7 @@ function cleanFileName(fileName) {
 
 
 /* =========================================================
-   ICONOS SEGÚN ARCHIVO
+   ICONOS
 ========================================================= */
 
 function getFileIcon(path) {
@@ -1802,7 +1847,7 @@ function getFileIcon(path) {
 
 
 /* =========================================================
-   EVITAR HTML EN LOS TÍTULOS
+   ESCAPAR HTML
 ========================================================= */
 
 function escapeHTML(text) {
