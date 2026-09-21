@@ -9,21 +9,21 @@
 
     <link rel="stylesheet" href="css/style.css">
 
+    <!-- SUPABASE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <script src="js/config.js"></script>
+    <!-- NUESTRA APP -->
     <script src="js/app.js" defer></script>
 </head>
 
 <body>
 
-    <!-- HEADER -->
-
+    <!-- CABECERA -->
     <header>
 
-        <div class="logo">
+        <a href="#" class="logo">
             DAMFLIX
-        </div>
+        </a>
 
         <nav>
             <a href="#modulos">Módulos</a>
@@ -37,20 +37,17 @@
     </header>
 
 
-    <!-- CONTENIDO PRINCIPAL -->
-
     <main>
 
         <!-- MÓDULOS -->
-
         <section id="modulos">
 
-            <div class="section-title">
+            <div class="section-header">
 
                 <h1>Módulos</h1>
 
-                <select id="module">
-                    <option value="">Elige una asignatura</option>
+                <select id="moduleFilter">
+                    <option value="">Todas las asignaturas</option>
                 </select>
 
             </div>
@@ -61,14 +58,16 @@
 
 
         <!-- BIBLIOTECA -->
-
         <section id="biblioteca">
 
-            <div class="section-title">
+            <div class="section-header">
 
                 <div>
                     <h2>Mi biblioteca</h2>
-                    <p>Todos tus documentos</p>
+
+                    <p id="librarySubtitle">
+                        Todos tus documentos
+                    </p>
                 </div>
 
                 <input
@@ -81,22 +80,33 @@
 
 
             <!-- FILTROS -->
-
             <div class="filters">
 
-                <button class="filter active" data-filter="all">
+                <button
+                    class="filter active"
+                    data-filter="all"
+                >
                     Todos
                 </button>
 
-                <button class="filter" data-filter="favorite">
+                <button
+                    class="filter"
+                    data-filter="favorite"
+                >
                     ★ Favoritos
                 </button>
 
-                <button class="filter" data-filter="pending">
+                <button
+                    class="filter"
+                    data-filter="pending"
+                >
                     Pendientes
                 </button>
 
-                <button class="filter" data-filter="completed">
+                <button
+                    class="filter"
+                    data-filter="completed"
+                >
                     Completados
                 </button>
 
@@ -104,8 +114,10 @@
 
 
             <!-- DOCUMENTOS -->
-
-            <div id="documentGrid" class="document-grid"></div>
+            <div
+                id="documentGrid"
+                class="document-grid"
+            ></div>
 
         </section>
 
@@ -113,14 +125,18 @@
 
 
     <!-- MODAL SUBIR ARCHIVO -->
-
     <div id="uploadModal" class="modal">
 
         <div class="modal-content">
 
-            <button id="closeUpload" class="close">
+            <button
+                type="button"
+                id="closeUpload"
+                class="close"
+            >
                 ×
             </button>
+
 
             <h2>Subir documento</h2>
 
@@ -130,8 +146,6 @@
 
 
             <form id="uploadForm">
-
-                <!-- TÍTULO -->
 
                 <label for="title">
                     Título
@@ -145,8 +159,6 @@
                 >
 
 
-                <!-- MÓDULO -->
-
                 <label for="uploadModule">
                     Módulo
                 </label>
@@ -155,15 +167,11 @@
                     id="uploadModule"
                     required
                 >
-
                     <option value="">
                         Selecciona un módulo
                     </option>
-
                 </select>
 
-
-                <!-- TEMA -->
 
                 <label for="topic">
                     Tema
@@ -177,16 +185,11 @@
                 >
 
 
-                <!-- TIPO -->
-
                 <label for="type">
                     Tipo
                 </label>
 
-                <select
-                    id="type"
-                    required
-                >
+                <select id="type" required>
 
                     <option value="Apuntes">
                         Apuntes
@@ -196,16 +199,20 @@
                         Ejercicios
                     </option>
 
-                    <option value="Examen">
-                        Examen
-                    </option>
-
                     <option value="Práctica">
                         Práctica
                     </option>
 
+                    <option value="Examen">
+                        Examen
+                    </option>
+
                     <option value="Trabajo">
                         Trabajo
+                    </option>
+
+                    <option value="Proyecto">
+                        Proyecto
                     </option>
 
                     <option value="Otro">
@@ -215,33 +222,30 @@
                 </select>
 
 
-                <!-- ARCHIVO -->
-
                 <label for="file">
                     Archivo
                 </label>
 
+                <!-- SIN ACCEPT = CUALQUIER ARCHIVO -->
                 <input
                     type="file"
                     id="file"
                     required
                 >
 
-                <small class="file-info">
+
+                <p class="file-help">
                     Puedes subir PDF, Word, PowerPoint, imágenes,
-                    ZIP, TXT, código y otros archivos.
-                </small>
+                    ZIP, código, TXT y otros tipos de archivo.
+                </p>
 
-
-                <!-- ESTADO -->
 
                 <div id="uploadStatus"></div>
 
 
-                <!-- BOTÓN -->
-
                 <button
                     type="submit"
+                    id="uploadButton"
                     class="upload-button"
                 >
                     Subir a DAMFLIX
@@ -254,12 +258,8 @@
     </div>
 
 
-    <!-- FOOTER -->
-
     <footer>
-
-        DAMFLIX · Hecho para organizar 1º DAM
-
+        DAMFLIX · Tu biblioteca de 1º DAM
     </footer>
 
 </body>
