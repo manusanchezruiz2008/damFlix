@@ -1,17 +1,6 @@
-const SUPABASE_URL =
-    "https://sriifbloyfivdyfisixn.supabase.co";
-
-const SUPABASE_KEY =
-    "sb_publishable_l26P02t68OP-dPzfgQcxeg_9xrc7aJT";
-
-const STORAGE_BUCKET =
-    "files";
-
-const supabaseClient =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
+const SUPABASE_URL = "https://sriifbloyfivdyfisixn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_l26P02t68OP-dPzfgQcxeg_9xrc7aJT";
+const STORAGE_BUCKET = "files";
 
 const modules = [
     {
@@ -48,18 +37,54 @@ const modules = [
     }
 ];
 
+let supabaseClient = null;
 let documentsList = [];
 let currentModule = "";
 let currentFilter = "all";
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-        createModules();
-        setupEvents();
-        loadDocuments();
+document.addEventListener("DOMContentLoaded", function () {
+
+    createModules();
+
+    setupEvents();
+
+    try {
+
+        if (
+            window.supabase &&
+            typeof window.supabase.createClient === "function"
+        ) {
+
+            supabaseClient =
+                window.supabase.createClient(
+                    SUPABASE_URL,
+                    SUPABASE_KEY
+                );
+
+            loadDocuments();
+
+        } else {
+
+            showSupabaseError(
+                "No se ha podido cargar Supabase."
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error iniciando Supabase:",
+            error
+        );
+
+        showSupabaseError(
+            "Error al conectar con Supabase."
+        );
+
     }
-);
+
+});
 
 function createModules() {
 
@@ -72,13 +97,23 @@ function createModules() {
     const uploadModule =
         document.getElementById("uploadModule");
 
+    if (!moduleRow || !moduleFilter || !uploadModule) {
+
+        console.error(
+            "No se encontraron los elementos de módulos."
+        );
+
+        return;
+    }
+
+    moduleRow.innerHTML = "";
+
     modules.forEach(function (module) {
 
         const card =
             document.createElement("div");
 
-        card.className =
-            "module-card";
+        card.className = "module-card";
 
         card.dataset.module =
             module.name;
@@ -100,7 +135,11 @@ function createModules() {
         card.addEventListener(
             "click",
             function () {
-                selectModule(module.name);
+
+                selectModule(
+                    module.name
+                );
+
             }
         );
 
@@ -137,45 +176,83 @@ function createModules() {
 
 function setupEvents() {
 
-    document
-        .getElementById("openUpload")
-        .addEventListener(
+    const openUpload =
+        document.getElementById(
+            "openUpload"
+        );
+
+    const closeUpload =
+        document.getElementById(
+            "closeUpload"
+        );
+
+    const uploadModal =
+        document.getElementById(
+            "uploadModal"
+        );
+
+    const uploadForm =
+        document.getElementById(
+            "uploadForm"
+        );
+
+    const moduleFilter =
+        document.getElementById(
+            "moduleFilter"
+        );
+
+    const searchInput =
+        document.getElementById(
+            "searchInput"
+        );
+
+    if (openUpload) {
+
+        openUpload.addEventListener(
             "click",
             function () {
 
-                document
-                    .getElementById("uploadModal")
-                    .classList
-                    .add("show");
+                uploadModal.classList.add(
+                    "show"
+                );
 
             }
         );
 
-    document
-        .getElementById("closeUpload")
-        .addEventListener(
+    }
+
+    if (closeUpload) {
+
+        closeUpload.addEventListener(
             "click",
             closeModal
         );
 
-    document
-        .getElementById("uploadModal")
-        .addEventListener(
+    }
+
+    if (uploadModal) {
+
+        uploadModal.addEventListener(
             "click",
             function (event) {
 
                 if (
-                    event.target === this
+                    event.target ===
+                    uploadModal
                 ) {
+
                     closeModal();
+
                 }
 
             }
         );
 
-    document
-        .getElementById("uploadForm")
-        .addEventListener(
+    }
+
+    if (uploadForm) {
+
+        uploadForm.addEventListener(
             "submit",
             function (event) {
 
@@ -186,9 +263,11 @@ function setupEvents() {
             }
         );
 
-    document
-        .getElementById("moduleFilter")
-        .addEventListener(
+    }
+
+    if (moduleFilter) {
+
+        moduleFilter.addEventListener(
             "change",
             function () {
 
@@ -199,15 +278,21 @@ function setupEvents() {
             }
         );
 
-    document
-        .getElementById("searchInput")
-        .addEventListener(
+    }
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
             "input",
             renderDocuments
         );
 
+    }
+
     const filterButtons =
-        document.querySelectorAll(".filter");
+        document.querySelectorAll(
+            ".filter"
+        );
 
     filterButtons.forEach(
         function (button) {
@@ -247,13 +332,22 @@ function selectModule(moduleName) {
     currentModule =
         moduleName;
 
-    document
-        .getElementById("moduleFilter")
-        .value =
-        moduleName;
+    const moduleFilter =
+        document.getElementById(
+            "moduleFilter"
+        );
+
+    if (moduleFilter) {
+
+        moduleFilter.value =
+            moduleName;
+
+    }
 
     document
-        .querySelectorAll(".module-card")
+        .querySelectorAll(
+            ".module-card"
+        )
         .forEach(
             function (card) {
 
@@ -282,15 +376,19 @@ function selectModule(moduleName) {
             "librarySubtitle"
         );
 
-    if (moduleName) {
+    if (subtitle) {
 
-        subtitle.textContent =
-            moduleName;
+        if (moduleName) {
 
-    } else {
+            subtitle.textContent =
+                moduleName;
 
-        subtitle.textContent =
-            "Todos tus documentos";
+        } else {
+
+            subtitle.textContent =
+                "Todos tus documentos";
+
+        }
 
     }
 
@@ -299,11 +397,18 @@ function selectModule(moduleName) {
 
 function closeModal() {
 
-    document
-        .getElementById("uploadModal")
-        .classList
-        .remove("show");
+    const modal =
+        document.getElementById(
+            "uploadModal"
+        );
 
+    if (modal) {
+
+        modal.classList.remove(
+            "show"
+        );
+
+    }
 }
 
 async function loadDocuments() {
@@ -312,6 +417,15 @@ async function loadDocuments() {
         document.getElementById(
             "documentGrid"
         );
+
+    if (!supabaseClient) {
+
+        showSupabaseError(
+            "Supabase no está conectado."
+        );
+
+        return;
+    }
 
     grid.innerHTML =
         '<div class="empty">Cargando documentos...</div>';
@@ -357,12 +471,34 @@ async function loadDocuments() {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Error cargando documentos:",
+            error
+        );
 
         grid.innerHTML =
             `
             <div class="empty">
                 Error al conectar con Supabase.
+            </div>
+            `;
+
+    }
+}
+
+function showSupabaseError(message) {
+
+    const grid =
+        document.getElementById(
+            "documentGrid"
+        );
+
+    if (grid) {
+
+        grid.innerHTML =
+            `
+            <div class="empty">
+                ${escapeHTML(message)}
             </div>
             `;
 
@@ -376,12 +512,21 @@ function renderDocuments() {
             "documentGrid"
         );
 
+    if (!grid) {
+        return;
+    }
+
+    const searchInput =
+        document.getElementById(
+            "searchInput"
+        );
+
     const search =
-        document
-            .getElementById("searchInput")
-            .value
-            .trim()
-            .toLowerCase();
+        searchInput
+            ? searchInput.value
+                .trim()
+                .toLowerCase()
+            : "";
 
     let results =
         documentsList.slice();
@@ -410,6 +555,7 @@ function renderDocuments() {
 
                     const text = `
                         ${item.title || ""}
+                        ${item.name || ""}
                         ${item.module || ""}
                         ${item.topic || ""}
                         ${item.type || ""}
@@ -490,7 +636,6 @@ function renderDocuments() {
             `;
 
         return;
-
     }
 
     grid.innerHTML = "";
@@ -498,10 +643,9 @@ function renderDocuments() {
     results.forEach(
         function (item) {
 
-            const card =
-                createDocumentCard(item);
-
-            grid.appendChild(card);
+            grid.appendChild(
+                createDocumentCard(item)
+            );
 
         }
     );
@@ -544,6 +688,7 @@ function createDocumentCard(item) {
             ${getFileIcon(
                 item.path ||
                 item.url ||
+                item.name ||
                 ""
             )}
         </div>
@@ -551,6 +696,7 @@ function createDocumentCard(item) {
         <h3>
             ${escapeHTML(
                 item.title ||
+                item.name ||
                 "Sin título"
             )}
         </h3>
@@ -608,7 +754,9 @@ function createDocumentCard(item) {
     `;
 
     card
-        .querySelector(".favorite-button")
+        .querySelector(
+            ".favorite-button"
+        )
         .addEventListener(
             "click",
             function () {
@@ -619,7 +767,9 @@ function createDocumentCard(item) {
         );
 
     card
-        .querySelector(".open-document")
+        .querySelector(
+            ".open-document"
+        )
         .addEventListener(
             "click",
             function () {
@@ -630,7 +780,9 @@ function createDocumentCard(item) {
         );
 
     card
-        .querySelector(".complete-document")
+        .querySelector(
+            ".complete-document"
+        )
         .addEventListener(
             "click",
             function () {
@@ -641,7 +793,9 @@ function createDocumentCard(item) {
         );
 
     card
-        .querySelector(".delete-document")
+        .querySelector(
+            ".delete-document"
+        )
         .addEventListener(
             "click",
             function () {
@@ -655,6 +809,15 @@ function createDocumentCard(item) {
 }
 
 async function uploadDocument() {
+
+    if (!supabaseClient) {
+
+        alert(
+            "Supabase no está conectado."
+        );
+
+        return;
+    }
 
     const title =
         document
@@ -874,8 +1037,7 @@ async function uploadDocument() {
 
                 closeModal();
 
-                status.textContent =
-                    "";
+                status.textContent = "";
 
             },
             700
@@ -897,8 +1059,7 @@ async function uploadDocument() {
 
     } finally {
 
-        button.disabled =
-            false;
+        button.disabled = false;
 
         button.textContent =
             "Subir a DAMFLIX";
@@ -924,6 +1085,10 @@ function openDocument(item) {
 }
 
 async function toggleFavorite(item) {
+
+    if (!supabaseClient) {
+        return;
+    }
 
     const newValue =
         item.favorite !== true;
@@ -963,6 +1128,10 @@ async function toggleFavorite(item) {
 
 async function toggleCompleted(item) {
 
+    if (!supabaseClient) {
+        return;
+    }
+
     const newValue =
         item.completed !== true;
 
@@ -1001,10 +1170,18 @@ async function toggleCompleted(item) {
 
 async function deleteDocument(item) {
 
+    if (!supabaseClient) {
+        return;
+    }
+
     const confirmation =
         confirm(
             "¿Seguro que quieres eliminar \"" +
-            item.title +
+            (
+                item.title ||
+                item.name ||
+                "este archivo"
+            ) +
             "\"?"
         );
 
@@ -1035,6 +1212,7 @@ async function deleteDocument(item) {
                 );
 
             }
+
         }
 
         const {
@@ -1058,11 +1236,14 @@ async function deleteDocument(item) {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
 
         alert(
             "No se pudo eliminar el documento."
         );
+
     }
 }
 
@@ -1092,6 +1273,7 @@ function cleanPathPart(text) {
 
         result =
             "sin_nombre";
+
     }
 
     return result;
@@ -1108,9 +1290,7 @@ function cleanFileName(fileName) {
     let extension =
         "";
 
-    if (
-        lastDot > 0
-    ) {
+    if (lastDot > 0) {
 
         name =
             fileName.substring(
@@ -1122,6 +1302,7 @@ function cleanFileName(fileName) {
             fileName.substring(
                 lastDot + 1
             );
+
     }
 
     name =
@@ -1156,6 +1337,7 @@ function cleanFileName(fileName) {
 
         name =
             "archivo";
+
     }
 
     if (extension) {
@@ -1165,6 +1347,7 @@ function cleanFileName(fileName) {
             "." +
             extension
         );
+
     }
 
     return name;
@@ -1178,8 +1361,7 @@ function getFileIcon(path) {
     const parts =
         cleanPath.split(".");
 
-    let extension =
-        "";
+    let extension = "";
 
     if (
         parts.length > 1
@@ -1189,12 +1371,12 @@ function getFileIcon(path) {
             parts
                 .pop()
                 .toLowerCase();
+
     }
 
     if (
         extension === "pdf"
     ) {
-
         return "📕";
     }
 
@@ -1202,7 +1384,6 @@ function getFileIcon(path) {
         extension === "doc" ||
         extension === "docx"
     ) {
-
         return "📘";
     }
 
@@ -1211,7 +1392,6 @@ function getFileIcon(path) {
         extension === "xlsx" ||
         extension === "csv"
     ) {
-
         return "📗";
     }
 
@@ -1219,7 +1399,6 @@ function getFileIcon(path) {
         extension === "ppt" ||
         extension === "pptx"
     ) {
-
         return "📙";
     }
 
@@ -1231,7 +1410,6 @@ function getFileIcon(path) {
         extension === "webp" ||
         extension === "svg"
     ) {
-
         return "🖼️";
     }
 
@@ -1240,7 +1418,6 @@ function getFileIcon(path) {
         extension === "rar" ||
         extension === "7z"
     ) {
-
         return "🗜️";
     }
 
@@ -1257,7 +1434,6 @@ function getFileIcon(path) {
         extension === "xml" ||
         extension === "json"
     ) {
-
         return "💻";
     }
 
@@ -1266,7 +1442,6 @@ function getFileIcon(path) {
         extension === "wav" ||
         extension === "ogg"
     ) {
-
         return "🎵";
     }
 
@@ -1276,7 +1451,6 @@ function getFileIcon(path) {
         extension === "avi" ||
         extension === "mkv"
     ) {
-
         return "🎬";
     }
 
@@ -1284,7 +1458,6 @@ function getFileIcon(path) {
         extension === "txt" ||
         extension === "md"
     ) {
-
         return "📄";
     }
 
