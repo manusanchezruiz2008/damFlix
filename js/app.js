@@ -1,3 +1,4 @@
+```js
 /* =========================================================
    CONFIGURACIÓN SUPABASE
 ========================================================= */
@@ -999,6 +1000,10 @@ async function uploadDocument() {
 
     try {
 
+        /* =================================================
+           RUTA
+        ================================================= */
+
         const moduleFolder =
             cleanPathPart(
                 moduleName
@@ -1044,7 +1049,7 @@ async function uploadDocument() {
 
 
         /* =================================================
-           CONTENT TYPE
+           TIPO DE ARCHIVO
         ================================================= */
 
         const extension =
@@ -1128,7 +1133,7 @@ async function uploadDocument() {
 
 
         /* =================================================
-           SUBIR
+           SUBIR A STORAGE
         ================================================= */
 
         const {
@@ -1163,7 +1168,7 @@ async function uploadDocument() {
 
 
         /* =================================================
-           URL
+           URL PÚBLICA
         ================================================= */
 
         const {
@@ -1184,7 +1189,7 @@ async function uploadDocument() {
 
 
         /* =================================================
-           BASE DE DATOS
+           GUARDAR EN FILES
         ================================================= */
 
         const {
@@ -1337,25 +1342,10 @@ function openDocument(item) {
         extension === "htm"
     ) {
 
-        let htmlUrl =
-            item.url;
-
-
-        /*
-         * Forzamos visualización
-         * en el navegador.
-         */
-
-        htmlUrl =
-            htmlUrl +
-            "?download=false";
-
-
         window.open(
-            htmlUrl,
+            item.url,
             "_blank"
         );
-
 
         return;
 
@@ -1363,7 +1353,7 @@ function openDocument(item) {
 
 
     /* =================================================
-       RESTO DE ARCHIVOS
+       RESTO
     ================================================= */
 
     window.open(
@@ -1477,7 +1467,7 @@ async function toggleCompleted(item) {
 
 
 /* =========================================================
-   ELIMINAR DOCUMENTO
+   ELIMINAR
 ========================================================= */
 
 async function deleteDocument(item) {
@@ -1564,7 +1554,7 @@ async function deleteDocument(item) {
 
 
 /* =========================================================
-   LIMPIAR CARPETAS
+   LIMPIAR RUTA
 ========================================================= */
 
 function cleanPathPart(text) {
@@ -1865,3 +1855,8 @@ function escapeHTML(text) {
     return element.innerHTML;
 
 }
+```
+
+**Importante:** después de sustituir el `app.js`, elimina el HTML que ya subiste y **vuelve a subirlo**. El nuevo código le pondrá `Content-Type: text/html` al archivo.
+
+Y si ese HTML utiliza otros archivos (`style.css`, imágenes, `script.js`, etc.), esos archivos tienen que estar también disponibles mediante una ruta que el HTML pueda cargar.
