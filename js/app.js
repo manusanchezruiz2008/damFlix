@@ -5,10 +5,10 @@
 ========================================================= */
 
 const SUPABASE_URL =
-    "https://TU-PROYECTO.supabase.co";
+    "https://sriifbloyfivdyfisixn.supabase.co";
 
 const SUPABASE_KEY =
-    "TU_PUBLISHABLE_KEY";
+    "sb_publishable_l26P02t68OP-dPzfgQcxeg_9xrc7aJT";
 
 const STORAGE_BUCKET =
     "files";
