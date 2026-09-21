@@ -999,10 +999,6 @@ async function uploadDocument() {
 
     try {
 
-        /*
-         * CREAMOS RUTA SEGURA
-         */
-
         const moduleFolder =
             cleanPathPart(
                 moduleName
@@ -1047,12 +1043,9 @@ async function uploadDocument() {
         );
 
 
-        /*
-         * DETECTAR TIPO DE ARCHIVO
-         *
-         * Esto es especialmente importante
-         * para HTML.
-         */
+        /* =================================================
+           DETECTAR CONTENT-TYPE
+        ================================================= */
 
         const extension =
             file.name
@@ -1065,10 +1058,6 @@ async function uploadDocument() {
             file.type;
 
 
-        /*
-         * HTML
-         */
-
         if (
             extension === "html" ||
             extension === "htm"
@@ -1080,10 +1069,6 @@ async function uploadDocument() {
         }
 
 
-        /*
-         * CSS
-         */
-
         else if (
             extension === "css"
         ) {
@@ -1093,10 +1078,6 @@ async function uploadDocument() {
 
         }
 
-
-        /*
-         * JAVASCRIPT
-         */
 
         else if (
             extension === "js"
@@ -1108,10 +1089,6 @@ async function uploadDocument() {
         }
 
 
-        /*
-         * JSON
-         */
-
         else if (
             extension === "json"
         ) {
@@ -1121,10 +1098,6 @@ async function uploadDocument() {
 
         }
 
-
-        /*
-         * SVG
-         */
 
         else if (
             extension === "svg"
@@ -1136,10 +1109,6 @@ async function uploadDocument() {
         }
 
 
-        /*
-         * TXT
-         */
-
         else if (
             extension === "txt"
         ) {
@@ -1149,10 +1118,6 @@ async function uploadDocument() {
 
         }
 
-
-        /*
-         * SI EL NAVEGADOR NO DETECTA EL TIPO
-         */
 
         if (!contentType) {
 
@@ -1168,9 +1133,9 @@ async function uploadDocument() {
         );
 
 
-        /*
-         * SUBIR ARCHIVO
-         */
+        /* =================================================
+           SUBIR ARCHIVO
+        ================================================= */
 
         const {
             data: uploadData,
@@ -1204,9 +1169,9 @@ async function uploadDocument() {
         }
 
 
-        /*
-         * URL PÚBLICA
-         */
+        /* =================================================
+           URL PÚBLICA
+        ================================================= */
 
         const {
             data: urlData
@@ -1225,9 +1190,9 @@ async function uploadDocument() {
             urlData.publicUrl;
 
 
-        /*
-         * GUARDAR EN TABLA FILES
-         */
+        /* =================================================
+           GUARDAR EN TABLA
+        ================================================= */
 
         const {
             error: databaseError
@@ -1267,11 +1232,6 @@ async function uploadDocument() {
 
 
         if (databaseError) {
-
-            /*
-             * SI FALLA LA BD,
-             * BORRAMOS EL ARCHIVO
-             */
 
             await supabaseClient
                 .storage
@@ -1494,10 +1454,6 @@ async function deleteDocument(item) {
 
     try {
 
-        /*
-         * BORRAR STORAGE
-         */
-
         if (item.path) {
 
             const {
@@ -1523,10 +1479,6 @@ async function deleteDocument(item) {
 
         }
 
-
-        /*
-         * BORRAR TABLA
-         */
 
         const {
             error: databaseError
