@@ -1,55 +1,124 @@
+// ========================================
+// DAMFLIX
+// Biblioteca de 1º DAM
+// ========================================
+
+
+// ========================================
+// MÓDULOS
+// ========================================
+
 const modules = [
+
   ["💻", "Programación"],
+
   ["🗄️", "Bases de Datos"],
+
   ["🛠️", "Entornos de Desarrollo"],
+
   ["🖥️", "Sistemas Informáticos"],
+
   ["🌐", "Lenguajes de Marcas"],
+
   ["📱", "Digitalización"],
+
   ["💼", "IPE I"],
+
   ["♻️", "Sostenibilidad"]
+
 ];
 
-console.log("DAMFLIX app.js cargado correctamente");
+
+// ========================================
+// DOCUMENTO DE DEMOSTRACIÓN
+// ========================================
 
 const sampleDocs = [
+
   {
     id: "demo-1",
+
     title: "Bienvenido a DAMFLIX",
+
     module: "Programación",
+
+    topic: "Tema 1",
+
     type: "Apuntes",
+
     url: "",
+
+    path: "",
+
     favorite: true,
+
     status: "Pendiente",
+
     demo: true
+
   }
+
 ];
 
+
+// ========================================
+// DOCUMENTOS GUARDADOS
+// ========================================
+
 let docs =
-  JSON.parse(localStorage.getItem("damflix_docs") || "null") ||
-  sampleDocs;
+  JSON.parse(
+    localStorage.getItem("damflix_docs") || "null"
+  ) || sampleDocs;
+
 
 let activeModule = "Todos";
+
 let activeFilter = "Todos";
 
-const moduleRow = document.getElementById("moduleRow");
-const documentGrid = document.getElementById("documentGrid");
-const searchInput = document.getElementById("searchInput");
-const moduleSelect = document.getElementById("module");
-const modal = document.getElementById("uploadModal");
-const uploadStatus = document.getElementById("uploadStatus");
+
+// ========================================
+// ELEMENTOS HTML
+// ========================================
+
+const moduleRow =
+  document.getElementById("moduleRow");
+
+
+const documentGrid =
+  document.getElementById("documentGrid");
+
+
+const searchInput =
+  document.getElementById("searchInput");
+
+
+const moduleSelect =
+  document.getElementById("module");
+
+
+const modal =
+  document.getElementById("uploadModal");
+
+
+const uploadStatus =
+  document.getElementById("uploadStatus");
 
 
 // ========================================
-// CONFIGURACIÓN DE SUPABASE
+// CONFIGURACIÓN SUPABASE
 // ========================================
 
-const CONFIG = window.DAMFLIX_CONFIG || {};
+const CONFIG =
+  window.DAMFLIX_CONFIG || {};
+
 
 const configured =
   CONFIG.supabaseUrl &&
   CONFIG.supabaseAnonKey &&
+  CONFIG.bucket &&
   !CONFIG.supabaseUrl.includes("PEGA_AQUI") &&
   !CONFIG.supabaseAnonKey.includes("PEGA_AQUI");
+
 
 const supabaseClient =
   configured && window.supabase
@@ -66,15 +135,30 @@ const supabaseClient =
 
 modules.forEach(([icon, name]) => {
 
-  const card = document.createElement("div");
+  const card =
+    document.createElement("div");
 
-  card.className = "module-card";
+
+  card.className =
+    "module-card";
+
 
   card.innerHTML = `
-    <div class="icon">${icon}</div>
-    <h3>${name}</h3>
-    <p>Ver documentos</p>
+
+    <div class="icon">
+      ${icon}
+    </div>
+
+    <h3>
+      ${name}
+    </h3>
+
+    <p>
+      Ver documentos
+    </p>
+
   `;
+
 
   card.onclick = () => {
 
@@ -82,19 +166,26 @@ modules.forEach(([icon, name]) => {
 
     document
       .getElementById("biblioteca")
-      .scrollIntoView();
+      .scrollIntoView({
+        behavior: "smooth"
+      });
 
     renderDocs();
 
   };
 
+
   moduleRow.appendChild(card);
 
 
-  const option = document.createElement("option");
+  const option =
+    document.createElement("option");
+
 
   option.value = name;
+
   option.textContent = name;
+
 
   moduleSelect.appendChild(option);
 
@@ -102,7 +193,7 @@ modules.forEach(([icon, name]) => {
 
 
 // ========================================
-// GUARDAR DOCUMENTOS
+// GUARDAR DATOS
 // ========================================
 
 function saveDocs() {
@@ -116,20 +207,30 @@ function saveDocs() {
 
 
 // ========================================
-// SEGURIDAD HTML
+// PROTEGER HTML
 // ========================================
 
 function escapeHtml(text) {
 
   return String(text).replace(
     /[&<>"']/g,
-    c => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    })[c]
+    function (character) {
+
+      return {
+
+        "&": "&amp;",
+
+        "<": "&lt;",
+
+        ">": "&gt;",
+
+        '"': "&quot;",
+
+        "'": "&#039;"
+
+      }[character];
+
+    }
   );
 
 }
@@ -147,51 +248,79 @@ function renderDocs() {
       .toLowerCase();
 
 
-  const filtered = docs.filter(doc => {
-
-    const matchesSearch =
-      [
-        doc.title,
-        doc.module,
-        doc.type
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
+  const filtered =
+    docs.filter(doc => {
 
 
-    const matchesModule =
-      activeModule === "Todos" ||
-      doc.module === activeModule;
+      const text =
+        [
+
+          doc.title,
+
+          doc.module,
+
+          doc.topic,
+
+          doc.type
+
+        ]
+          .join(" ")
+          .toLowerCase();
 
 
-    let matchesFilter = true;
+      const matchesSearch =
+        text.includes(q);
 
 
-    if (activeFilter === "Favoritos") {
-      matchesFilter = !!doc.favorite;
-    }
+      const matchesModule =
+        activeModule === "Todos" ||
+        doc.module === activeModule;
 
 
-    if (activeFilter === "Pendiente") {
-      matchesFilter =
-        doc.status === "Pendiente";
-    }
+      let matchesFilter = true;
 
 
-    if (activeFilter === "Completado") {
-      matchesFilter =
-        doc.status === "Completado";
-    }
+      if (
+        activeFilter === "Favoritos"
+      ) {
+
+        matchesFilter =
+          !!doc.favorite;
+
+      }
 
 
-    return (
-      matchesSearch &&
-      matchesModule &&
-      matchesFilter
-    );
+      if (
+        activeFilter === "Pendiente"
+      ) {
 
-  });
+        matchesFilter =
+          doc.status === "Pendiente";
+
+      }
+
+
+      if (
+        activeFilter === "Completado"
+      ) {
+
+        matchesFilter =
+          doc.status === "Completado";
+
+      }
+
+
+      return (
+
+        matchesSearch &&
+
+        matchesModule &&
+
+        matchesFilter
+
+      );
+
+    });
 
 
   documentGrid.innerHTML = "";
@@ -207,65 +336,119 @@ function renderDocs() {
 
   filtered.forEach(doc => {
 
+
     const card =
       document.createElement("article");
 
-    card.className = "doc-card";
+
+    card.className =
+      "doc-card";
 
 
     card.innerHTML = `
+
       <div class="doc-cover">
+
         📕
 
         <button
           class="favorite ${doc.favorite ? "on" : ""}"
           title="Favorito"
+          type="button"
         >
           ★
         </button>
+
       </div>
+
 
       <div class="doc-body">
 
+
         <span class="badge">
+
           ${escapeHtml(
             doc.status || "Pendiente"
           )}
+
         </span>
 
+
         <h3>
-          ${escapeHtml(doc.title)}
+
+          ${escapeHtml(
+            doc.title
+          )}
+
         </h3>
 
+
         <div class="meta">
-          ${escapeHtml(doc.module)}
+
+          ${escapeHtml(
+            doc.module
+          )}
+
           ·
-          ${escapeHtml(doc.type)}
+
+          ${escapeHtml(
+            doc.topic || "Sin tema"
+          )}
+
+          ·
+
+          ${escapeHtml(
+            doc.type
+          )}
+
         </div>
+
 
         <div class="doc-actions">
 
-          <button class="open-btn">
+
+          <button
+            class="open-btn"
+            type="button"
+          >
+
             ${doc.demo ? "Demo" : "Abrir"}
+
           </button>
 
-          <button class="progress-btn">
+
+          <button
+            class="progress-btn"
+            type="button"
+          >
+
             ${
               doc.status === "Completado"
                 ? "↩"
                 : "✓"
             }
+
           </button>
+
 
           ${
             doc.demo
               ? ""
-              : '<button class="delete-btn">×</button>'
+              : `
+                <button
+                  class="delete-btn"
+                  type="button"
+                >
+                  ×
+                </button>
+              `
           }
+
 
         </div>
 
       </div>
+
     `;
 
 
@@ -277,7 +460,8 @@ function renderDocs() {
       .querySelector(".favorite")
       .onclick = () => {
 
-        doc.favorite = !doc.favorite;
+        doc.favorite =
+          !doc.favorite;
 
         saveDocs();
 
@@ -287,7 +471,7 @@ function renderDocs() {
 
 
     // ====================================
-    // COMPLETAR DOCUMENTO
+    // COMPLETADO
     // ====================================
 
     card
@@ -298,6 +482,7 @@ function renderDocs() {
           doc.status === "Completado"
             ? "Pendiente"
             : "Completado";
+
 
         saveDocs();
 
@@ -317,10 +502,15 @@ function renderDocs() {
         if (doc.demo) {
 
           alert(
-            "Sube tu primer PDF con el botón '+ Subir PDF'."
+            "Este es el documento de demostración."
           );
 
-        } else if (doc.url) {
+          return;
+
+        }
+
+
+        if (doc.url) {
 
           window.open(
             doc.url,
@@ -338,69 +528,81 @@ function renderDocs() {
     // ====================================
 
     const deleteBtn =
-      card.querySelector(".delete-btn");
+      card.querySelector(
+        ".delete-btn"
+      );
 
 
     if (deleteBtn) {
 
-      deleteBtn.onclick = async () => {
-
-        if (
-          !confirm(
-            `¿Eliminar "${doc.title}" de DAMFLIX?`
-          )
-        ) {
-          return;
-        }
+      deleteBtn.onclick =
+        async () => {
 
 
-        try {
-
-          if (
-            doc.path &&
-            supabaseClient
-          ) {
-
-            const {
-              error
-            } = await supabaseClient
-              .storage
-              .from(CONFIG.bucket)
-              .remove([doc.path]);
+          const confirmDelete =
+            confirm(
+              `¿Eliminar "${doc.title}" de DAMFLIX?`
+            );
 
 
-            if (error) {
+          if (!confirmDelete) {
 
-              console.error(
-                "Error eliminando archivo:",
-                error
-              );
-
-            }
+            return;
 
           }
 
-        } catch (error) {
 
-          console.error(
-            "Error eliminando archivo:",
-            error
-          );
-
-        }
+          try {
 
 
-        docs =
-          docs.filter(
-            x => x.id !== doc.id
-          );
+            if (
+              doc.path &&
+              supabaseClient
+            ) {
 
 
-        saveDocs();
+              const result =
+                await supabaseClient
+                  .storage
+                  .from(CONFIG.bucket)
+                  .remove([
+                    doc.path
+                  ]);
 
-        renderDocs();
 
-      };
+              if (result.error) {
+
+                console.error(
+                  result.error
+                );
+
+              }
+
+            }
+
+
+          } catch (error) {
+
+            console.error(
+              "Error eliminando PDF:",
+              error
+            );
+
+          }
+
+
+          docs =
+            docs.filter(
+              item =>
+                item.id !== doc.id
+            );
+
+
+          saveDocs();
+
+          renderDocs();
+
+        };
 
     }
 
@@ -418,22 +620,30 @@ function renderDocs() {
 
 document
   .querySelectorAll(".filter")
-  .forEach(btn => {
+  .forEach(button => {
 
-    btn.onclick = () => {
+
+    button.onclick = () => {
+
 
       document
         .querySelectorAll(".filter")
-        .forEach(b =>
-          b.classList.remove("active")
-        );
+        .forEach(item => {
+
+          item.classList.remove(
+            "active"
+          );
+
+        });
 
 
-      btn.classList.add("active");
+      button.classList.add(
+        "active"
+      );
 
 
       activeFilter =
-        btn.dataset.filter;
+        button.dataset.filter;
 
 
       renderDocs();
@@ -454,12 +664,15 @@ searchInput.addEventListener(
 
 
 // ========================================
-// ABRIR / CERRAR MODAL
+// MODAL
 // ========================================
 
 function openModal() {
 
-  modal.classList.remove("hidden");
+  modal.classList.remove(
+    "hidden"
+  );
+
 
   modal.setAttribute(
     "aria-hidden",
@@ -471,17 +684,25 @@ function openModal() {
 
 function closeModal() {
 
-  modal.classList.add("hidden");
+  modal.classList.add(
+    "hidden"
+  );
+
 
   modal.setAttribute(
     "aria-hidden",
     "true"
   );
 
+
   uploadStatus.textContent = "";
 
 }
 
+
+// ========================================
+// BOTONES DEL MODAL
+// ========================================
 
 document
   .getElementById("openUpload")
@@ -500,9 +721,11 @@ document
 
 modal.addEventListener(
   "click",
-  e => {
+  event => {
 
-    if (e.target === modal) {
+    if (
+      event.target === modal
+    ) {
 
       closeModal();
 
@@ -520,12 +743,15 @@ document
   .getElementById("uploadForm")
   .addEventListener(
     "submit",
-    async e => {
-
-      e.preventDefault();
+    async event => {
 
 
-      // Comprobar Supabase
+      event.preventDefault();
+
+
+      // ------------------------------------
+      // COMPROBAR SUPABASE
+      // ------------------------------------
 
       if (!supabaseClient) {
 
@@ -533,13 +759,17 @@ document
           "Error: Supabase no está configurado correctamente.";
 
         console.error(
-          "supabaseClient no está disponible."
+          "No existe supabaseClient."
         );
 
         return;
 
       }
 
+
+      // ------------------------------------
+      // DATOS DEL FORMULARIO
+      // ------------------------------------
 
       const file =
         document
@@ -560,11 +790,22 @@ document
           .value;
 
 
+      const topic =
+        document
+          .getElementById("topic")
+          .value
+          .trim();
+
+
       const type =
         document
           .getElementById("type")
           .value;
 
+
+      // ------------------------------------
+      // COMPROBAR ARCHIVO
+      // ------------------------------------
 
       if (!file) {
 
@@ -575,8 +816,6 @@ document
 
       }
 
-
-      // Comprobar que sea PDF
 
       if (
         file.type !== "application/pdf" &&
@@ -593,68 +832,106 @@ document
       }
 
 
+      // ------------------------------------
+      // MOSTRAR ESTADO
+      // ------------------------------------
+
       uploadStatus.textContent =
         "Subiendo PDF...";
 
 
       try {
 
-        // Limpiar nombre del archivo
 
-        const safeName =
-          file.name.replace(
-            /[^a-zA-Z0-9._-]/g,
-            "_"
-          );
-
-
-        // Crear carpeta del módulo
+        // ----------------------------------
+        // LIMPIAR NOMBRES
+        // ----------------------------------
 
         const moduleFolder =
-          module.replace(
-            /\s+/g,
-            "_"
-          );
+          module
+            .normalize("NFD")
+            .replace(
+              /[\u0300-\u036f]/g,
+              ""
+            )
+            .replace(
+              /[^a-zA-Z0-9_-]/g,
+              "_"
+            );
 
 
-        // Crear nombre único
+        const topicFolder =
+          topic
+            .normalize("NFD")
+            .replace(
+              /[\u0300-\u036f]/g,
+              ""
+            )
+            .replace(
+              /[^a-zA-Z0-9_-]/g,
+              "_"
+            );
+
+
+        const safeName =
+          file.name
+            .normalize("NFD")
+            .replace(
+              /[\u0300-\u036f]/g,
+              ""
+            )
+            .replace(
+              /[^a-zA-Z0-9._-]/g,
+              "_"
+            );
+
+
+        // ----------------------------------
+        // NOMBRE ÚNICO
+        // ----------------------------------
 
         const fileName =
           `${Date.now()}_${safeName}`;
 
 
-        // Ruta del archivo
+        // ----------------------------------
+        // RUTA
+        // ----------------------------------
 
         const path =
-          `${moduleFolder}/${fileName}`;
+          `${moduleFolder}/${topicFolder}/${fileName}`;
 
 
         console.log(
-          "Subiendo archivo:",
+          "Ruta del PDF:",
           path
         );
 
 
-        // ==================================
-        // SUBIR A STORAGE
-        // ==================================
+        // ----------------------------------
+        // SUBIR A SUPABASE
+        // ----------------------------------
 
         const {
           error: uploadError
-        } = await supabaseClient
-          .storage
-          .from(CONFIG.bucket)
-          .upload(
-            path,
-            file,
-            {
-              cacheControl: "3600",
-              upsert: false,
-              contentType:
-                file.type ||
-                "application/pdf"
-            }
-          );
+        } =
+          await supabaseClient
+            .storage
+            .from(CONFIG.bucket)
+            .upload(
+              path,
+              file,
+              {
+
+                cacheControl: "3600",
+
+                upsert: false,
+
+                contentType:
+                  "application/pdf"
+
+              }
+            );
 
 
         if (uploadError) {
@@ -664,45 +941,66 @@ document
         }
 
 
-        // ==================================
-        // OBTENER URL
-        // ==================================
+        // ----------------------------------
+        // URL PÚBLICA
+        // ----------------------------------
 
         const {
-          data
-        } = supabaseClient
-          .storage
-          .from(CONFIG.bucket)
-          .getPublicUrl(path);
+          data: publicData
+        } =
+          supabaseClient
+            .storage
+            .from(CONFIG.bucket)
+            .getPublicUrl(path);
 
 
-        // ==================================
-        // GUARDAR EN DAMFLIX
-        // ==================================
+        // ----------------------------------
+        // CREAR DOCUMENTO
+        // ----------------------------------
 
-        docs.unshift({
+        const newDocument = {
 
           id:
             crypto.randomUUID
               ? crypto.randomUUID()
               : String(Date.now()),
 
-          title: title,
+          title:
 
-          module: module,
+            title ||
+            file.name
+              .replace(
+                /\.pdf$/i,
+                ""
+              ),
 
-          type: type,
+          module,
+
+          topic,
+
+          type,
 
           url:
-            data.publicUrl,
+            publicData.publicUrl,
 
-          path: path,
+          path,
 
           favorite: false,
 
-          status: "Pendiente"
+          status: "Pendiente",
 
-        });
+          demo: false
+
+        };
+
+
+        // ----------------------------------
+        // GUARDAR
+        // ----------------------------------
+
+        docs.unshift(
+          newDocument
+        );
 
 
         saveDocs();
@@ -710,27 +1008,32 @@ document
         renderDocs();
 
 
-        // Limpiar formulario
+        // ----------------------------------
+        // LIMPIAR FORMULARIO
+        // ----------------------------------
 
-        e.target.reset();
+        event.target.reset();
 
 
         uploadStatus.textContent =
           "PDF subido correctamente.";
 
 
-        // Cerrar modal
+        // ----------------------------------
+        // CERRAR MODAL
+        // ----------------------------------
 
         setTimeout(
           closeModal,
-          700
+          800
         );
 
 
       } catch (error) {
 
+
         console.error(
-          "ERROR AL SUBIR PDF:",
+          "ERROR SUBIENDO PDF:",
           error
         );
 
@@ -739,7 +1042,7 @@ document
           "Error: " +
           (
             error.message ||
-            "No se pudo subir el archivo."
+            "No se pudo subir el PDF."
           );
 
       }
@@ -749,7 +1052,11 @@ document
 
 
 // ========================================
-// INICIAR DAMFLIX
+// INICIAR
 // ========================================
 
 renderDocs();
+
+console.log(
+  "DAMFLIX cargado correctamente."
+);
