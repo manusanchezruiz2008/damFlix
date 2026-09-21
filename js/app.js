@@ -1,42 +1,76 @@
-const supabaseClient = window.supabase.createClient(
-    CONFIG.supabaseUrl,
-    CONFIG.supabaseAnonKey
-);
+/* =========================================================
+   CONFIGURACIÓN SUPABASE
+
+   PEGA AQUÍ TUS DATOS REALES.
+========================================================= */
+
+const SUPABASE_URL =
+    "https://TU-PROYECTO.supabase.co";
+
+const SUPABASE_KEY =
+    "TU_PUBLISHABLE_KEY";
+
+const STORAGE_BUCKET =
+    "files";
 
 
 /* =========================================================
-   MÓDULOS
+   CONEXIÓN SUPABASE
+========================================================= */
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+/* =========================================================
+   MÓDULOS DAM
 ========================================================= */
 
 const modules = [
+
     {
         name: "Programación",
         icon: "💻"
     },
+
     {
         name: "Bases de Datos",
         icon: "🗄️"
     },
+
     {
         name: "Entornos de Desarrollo",
         icon: "🛠️"
     },
+
     {
         name: "Sistemas Informáticos",
         icon: "🖥️"
     },
+
+    {
+        name: "Lenguajes de Marcas",
+        icon: "🌐"
+    },
+
     {
         name: "Digitalización",
         icon: "🔢"
     },
+
     {
         name: "IPE I",
         icon: "💼"
     },
+
     {
         name: "Sostenibilidad",
         icon: "♻️"
     }
+
 ];
 
 
@@ -44,7 +78,7 @@ const modules = [
    VARIABLES
 ========================================================= */
 
-let documents = [];
+let documentsList = [];
 
 let currentModule = "";
 
@@ -52,138 +86,135 @@ let currentFilter = "all";
 
 
 /* =========================================================
-   INICIAR APLICACIÓN
+   INICIO
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-    checkSupabase();
+        createModules();
 
-    loadModules();
+        setupEvents();
 
-    loadDocuments();
+        loadDocuments();
 
-    setupEvents();
-
-});
+    }
+);
 
 
 /* =========================================================
-   COMPROBAR SUPABASE
+   CREAR MÓDULOS
 ========================================================= */
 
-function checkSupabase() {
-
-    if (!CONFIG.supabaseUrl) {
-
-        console.error("Falta supabaseUrl en config.js");
-
-        return false;
-
-    }
-
-    if (!CONFIG.supabaseAnonKey) {
-
-        console.error("Falta supabaseAnonKey en config.js");
-
-        return false;
-
-    }
-
-    if (!CONFIG.bucket) {
-
-        console.error("Falta el nombre del bucket en config.js");
-
-        return false;
-
-    }
-
-    return true;
-}
-
-
-/* =========================================================
-   CARGAR MÓDULOS
-========================================================= */
-
-function loadModules() {
+function createModules() {
 
     const moduleRow =
-        document.getElementById("moduleRow");
+        document.getElementById(
+            "moduleRow"
+        );
 
-    const moduleSelect =
-        document.getElementById("module");
+    const moduleFilter =
+        document.getElementById(
+            "moduleFilter"
+        );
 
     const uploadModule =
-        document.getElementById("uploadModule");
+        document.getElementById(
+            "uploadModule"
+        );
 
 
     modules.forEach(function (module) {
 
-        /* TARJETA DEL MÓDULO */
+        /* =====================
+           TARJETA
+        ===================== */
 
-        const card = document.createElement("div");
+        const card =
+            document.createElement(
+                "div"
+            );
 
-        card.className = "module-card";
+        card.className =
+            "module-card";
+
+        card.dataset.module =
+            module.name;
+
 
         card.innerHTML = `
+
             <div class="module-icon">
                 ${module.icon}
             </div>
 
             <h3>
-                ${module.name}
+                ${escapeHTML(module.name)}
             </h3>
 
             <p>
                 Ver documentos
             </p>
+
         `;
 
 
-        card.addEventListener("click", function () {
+        card.addEventListener(
+            "click",
+            function () {
 
-            currentModule = module.name;
+                selectModule(
+                    module.name
+                );
 
-            document.getElementById("module").value =
-                module.name;
-
-            loadDocuments();
-
-            document
-                .getElementById("biblioteca")
-                .scrollIntoView({
-                    behavior: "smooth"
-                });
-
-        });
+            }
+        );
 
 
-        moduleRow.appendChild(card);
+        moduleRow.appendChild(
+            card
+        );
 
 
-        /* SELECT PRINCIPAL */
+        /* =====================
+           SELECT FILTRO
+        ===================== */
 
-        const option =
-            document.createElement("option");
+        const filterOption =
+            document.createElement(
+                "option"
+            );
 
-        option.value = module.name;
+        filterOption.value =
+            module.name;
 
-        option.textContent = module.name;
+        filterOption.textContent =
+            module.name;
 
-        moduleSelect.appendChild(option);
+        moduleFilter.appendChild(
+            filterOption
+        );
 
 
-        /* SELECT DEL MODAL */
+        /* =====================
+           SELECT SUBIDA
+        ===================== */
 
         const uploadOption =
-            document.createElement("option");
+            document.createElement(
+                "option"
+            );
 
-        uploadOption.value = module.name;
+        uploadOption.value =
+            module.name;
 
-        uploadOption.textContent = module.name;
+        uploadOption.textContent =
+            module.name;
 
-        uploadModule.appendChild(uploadOption);
+        uploadModule.appendChild(
+            uploadOption
+        );
 
     });
 
@@ -196,105 +227,235 @@ function loadModules() {
 
 function setupEvents() {
 
-
-    /* ABRIR MODAL */
-
-    document
-        .getElementById("openUpload")
-        .addEventListener("click", function () {
-
-            document
-                .getElementById("uploadModal")
-                .classList.add("show");
-
-        });
-
-
-    /* CERRAR MODAL */
+    /* =========================
+       ABRIR MODAL
+    ========================= */
 
     document
-        .getElementById("closeUpload")
-        .addEventListener("click", closeModal);
-
-
-    /* CLICK FUERA DEL MODAL */
-
-    document
-        .getElementById("uploadModal")
-        .addEventListener("click", function (event) {
-
-            if (event.target === this) {
-
-                closeModal();
-
-            }
-
-        });
-
-
-    /* FORMULARIO */
-
-    document
-        .getElementById("uploadForm")
-        .addEventListener("submit", function (event) {
-
-            event.preventDefault();
-
-            uploadDocument();
-
-        });
-
-
-    /* SELECT DE MÓDULO */
-
-    document
-        .getElementById("module")
-        .addEventListener("change", function () {
-
-            currentModule = this.value;
-
-            loadDocuments();
-
-        });
-
-
-    /* BUSCADOR */
-
-    document
-        .getElementById("searchInput")
-        .addEventListener("input", function () {
-
-            renderDocuments();
-
-        });
-
-
-    /* FILTROS */
-
-    document
-        .querySelectorAll(".filter")
-        .forEach(function (button) {
-
-            button.addEventListener("click", function () {
+        .getElementById(
+            "openUpload"
+        )
+        .addEventListener(
+            "click",
+            function () {
 
                 document
-                    .querySelectorAll(".filter")
-                    .forEach(function (btn) {
+                    .getElementById(
+                        "uploadModal"
+                    )
+                    .classList
+                    .add("show");
 
-                        btn.classList.remove("active");
+            }
+        );
 
-                    });
 
-                this.classList.add("active");
+    /* =========================
+       CERRAR MODAL
+    ========================= */
 
-                currentFilter =
-                    this.dataset.filter;
+    document
+        .getElementById(
+            "closeUpload"
+        )
+        .addEventListener(
+            "click",
+            closeModal
+        );
 
-                renderDocuments();
 
-            });
+    /* =========================
+       CERRAR CLICK FUERA
+    ========================= */
 
-        });
+    document
+        .getElementById(
+            "uploadModal"
+        )
+        .addEventListener(
+            "click",
+            function (event) {
+
+                if (
+                    event.target === this
+                ) {
+
+                    closeModal();
+
+                }
+
+            }
+        );
+
+
+    /* =========================
+       FORMULARIO
+    ========================= */
+
+    document
+        .getElementById(
+            "uploadForm"
+        )
+        .addEventListener(
+            "submit",
+            function (event) {
+
+                event.preventDefault();
+
+                uploadDocument();
+
+            }
+        );
+
+
+    /* =========================
+       SELECT MÓDULO
+    ========================= */
+
+    document
+        .getElementById(
+            "moduleFilter"
+        )
+        .addEventListener(
+            "change",
+            function () {
+
+                selectModule(
+                    this.value
+                );
+
+            }
+        );
+
+
+    /* =========================
+       BUSCADOR
+    ========================= */
+
+    document
+        .getElementById(
+            "searchInput"
+        )
+        .addEventListener(
+            "input",
+            renderDocuments
+        );
+
+
+    /* =========================
+       FILTROS
+    ========================= */
+
+    const filterButtons =
+        document.querySelectorAll(
+            ".filter"
+        );
+
+
+    filterButtons.forEach(
+        function (button) {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    filterButtons.forEach(
+                        function (item) {
+
+                            item.classList.remove(
+                                "active"
+                            );
+
+                        }
+                    );
+
+
+                    this.classList.add(
+                        "active"
+                    );
+
+
+                    currentFilter =
+                        this.dataset.filter;
+
+
+                    renderDocuments();
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   SELECCIONAR MÓDULO
+========================================================= */
+
+function selectModule(moduleName) {
+
+    currentModule =
+        moduleName;
+
+
+    document
+        .getElementById(
+            "moduleFilter"
+        )
+        .value =
+        moduleName;
+
+
+    document
+        .querySelectorAll(
+            ".module-card"
+        )
+        .forEach(
+            function (card) {
+
+                if (
+                    card.dataset.module ===
+                    moduleName
+                ) {
+
+                    card.classList.add(
+                        "selected"
+                    );
+
+                } else {
+
+                    card.classList.remove(
+                        "selected"
+                    );
+
+                }
+
+            }
+        );
+
+
+    const subtitle =
+        document.getElementById(
+            "librarySubtitle"
+        );
+
+
+    if (moduleName) {
+
+        subtitle.textContent =
+            moduleName;
+
+    } else {
+
+        subtitle.textContent =
+            "Todos tus documentos";
+
+    }
+
+
+    renderDocuments();
 
 }
 
@@ -306,59 +467,88 @@ function setupEvents() {
 function closeModal() {
 
     document
-        .getElementById("uploadModal")
-        .classList.remove("show");
+        .getElementById(
+            "uploadModal"
+        )
+        .classList
+        .remove("show");
 
 }
 
 
 /* =========================================================
-   CARGAR DOCUMENTOS
+   CARGAR DOCUMENTOS DE SUPABASE
 ========================================================= */
 
 async function loadDocuments() {
 
     const grid =
-        document.getElementById("documentGrid");
+        document.getElementById(
+            "documentGrid"
+        );
+
 
     grid.innerHTML =
-        "<p>Cargando documentos...</p>";
+        '<div class="empty">Cargando documentos...</div>';
 
 
     try {
 
-        const { data, error } =
+        const {
+            data,
+            error
+        } =
             await supabaseClient
                 .from("files")
                 .select("*")
-                .order("created_at", {
-                    ascending: false
-                });
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
 
 
         if (error) {
 
-            console.error(error);
+            console.error(
+                "Error leyendo files:",
+                error
+            );
+
 
             grid.innerHTML =
-                "<p>No se pudieron cargar los documentos.</p>";
+                `
+                <div class="empty">
+                    Error al cargar los documentos:
+                    ${escapeHTML(error.message)}
+                </div>
+                `;
 
             return;
 
         }
 
 
-        documents = data || [];
+        documentsList =
+            data || [];
 
 
         renderDocuments();
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
+
 
         grid.innerHTML =
-            "<p>Error al cargar los documentos.</p>";
+            `
+            <div class="empty">
+                Error al conectar con Supabase.
+            </div>
+            `;
 
     }
 
@@ -372,130 +562,187 @@ async function loadDocuments() {
 function renderDocuments() {
 
     const grid =
-        document.getElementById("documentGrid");
+        document.getElementById(
+            "documentGrid"
+        );
 
-    const searchInput =
-        document.getElementById("searchInput");
 
     const search =
-        searchInput.value.toLowerCase().trim();
+        document
+            .getElementById(
+                "searchInput"
+            )
+            .value
+            .trim()
+            .toLowerCase();
 
 
-    let filtered =
-        documents.slice();
+    let results =
+        documentsList.slice();
 
 
-    /* FILTRAR POR MÓDULO */
+    /* =========================
+       MÓDULO
+    ========================= */
 
-    if (currentModule !== "") {
+    if (currentModule) {
 
-        filtered =
-            filtered.filter(function (document) {
+        results =
+            results.filter(
+                function (item) {
 
-                return document.module === currentModule;
+                    return (
+                        item.module ===
+                        currentModule
+                    );
 
-            });
-
-    }
-
-
-    /* BUSCADOR */
-
-    if (search !== "") {
-
-        filtered =
-            filtered.filter(function (document) {
-
-                const text = `
-
-                    ${document.title || ""}
-
-                    ${document.module || ""}
-
-                    ${document.topic || ""}
-
-                    ${document.type || ""}
-
-                `.toLowerCase();
-
-
-                return text.includes(search);
-
-            });
+                }
+            );
 
     }
 
 
-    /* FAVORITOS */
+    /* =========================
+       BUSCADOR
+    ========================= */
 
-    if (currentFilter === "favorite") {
+    if (search) {
 
-        filtered =
-            filtered.filter(function (document) {
+        results =
+            results.filter(
+                function (item) {
 
-                return document.favorite === true;
+                    const text = `
 
-            });
+                        ${item.title || ""}
 
-    }
+                        ${item.module || ""}
 
+                        ${item.topic || ""}
 
-    /* PENDIENTES */
+                        ${item.type || ""}
 
-    if (currentFilter === "pending") {
-
-        filtered =
-            filtered.filter(function (document) {
-
-                return document.completed !== true;
-
-            });
-
-    }
+                    `
+                        .toLowerCase();
 
 
-    /* COMPLETADOS */
+                    return text.includes(
+                        search
+                    );
 
-    if (currentFilter === "completed") {
-
-        filtered =
-            filtered.filter(function (document) {
-
-                return document.completed === true;
-
-            });
+                }
+            );
 
     }
 
 
-    /* NO HAY DOCUMENTOS */
+    /* =========================
+       FAVORITOS
+    ========================= */
 
-    if (filtered.length === 0) {
+    if (
+        currentFilter ===
+        "favorite"
+    ) {
 
-        grid.innerHTML = `
+        results =
+            results.filter(
+                function (item) {
+
+                    return (
+                        item.favorite === true
+                    );
+
+                }
+            );
+
+    }
+
+
+    /* =========================
+       PENDIENTES
+    ========================= */
+
+    if (
+        currentFilter ===
+        "pending"
+    ) {
+
+        results =
+            results.filter(
+                function (item) {
+
+                    return (
+                        item.completed !== true
+                    );
+
+                }
+            );
+
+    }
+
+
+    /* =========================
+       COMPLETADOS
+    ========================= */
+
+    if (
+        currentFilter ===
+        "completed"
+    ) {
+
+        results =
+            results.filter(
+                function (item) {
+
+                    return (
+                        item.completed === true
+                    );
+
+                }
+            );
+
+    }
+
+
+    /* =========================
+       VACÍO
+    ========================= */
+
+    if (
+        results.length === 0
+    ) {
+
+        grid.innerHTML =
+            `
             <div class="empty">
                 No hay documentos para mostrar.
             </div>
-        `;
+            `;
 
         return;
 
     }
 
 
-    /* CREAR TARJETAS */
-
     grid.innerHTML = "";
 
 
-    filtered.forEach(function (document) {
+    results.forEach(
+        function (item) {
 
-        const card =
-            createDocumentCard(document);
+            const card =
+                createDocumentCard(
+                    item
+                );
 
-        grid.appendChild(card);
 
-    });
+            grid.appendChild(
+                card
+            );
+
+        }
+    );
 
 }
 
@@ -504,21 +751,24 @@ function renderDocuments() {
    CREAR TARJETA
 ========================================================= */
 
-function createDocumentCard(document) {
+function createDocumentCard(item) {
 
     const card =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     card.className =
         "document-card";
 
 
-    const completed =
-        document.completed === true;
-
-
     const favorite =
-        document.favorite === true;
+        item.favorite === true;
+
+
+    const completed =
+        item.completed === true;
 
 
     card.innerHTML = `
@@ -526,36 +776,64 @@ function createDocumentCard(document) {
         <div class="document-top">
 
             <span class="document-type">
-                ${escapeHTML(document.type || "Archivo")}
+
+                ${escapeHTML(
+                    item.type ||
+                    "Archivo"
+                )}
+
             </span>
 
+
             <button
+                type="button"
                 class="favorite-button"
-                title="Favorito"
             >
-                ${favorite ? "★" : "☆"}
+
+                ${favorite
+                    ? "★"
+                    : "☆"
+                }
+
             </button>
 
         </div>
 
 
         <div class="document-icon">
-            ${getFileIcon(document)}
+
+            ${getFileIcon(
+                item.path ||
+                item.url ||
+                ""
+            )}
+
         </div>
 
 
         <h3>
-            ${escapeHTML(document.title || "Sin título")}
+
+            ${escapeHTML(
+                item.title ||
+                "Sin título"
+            )}
+
         </h3>
 
 
         <p class="document-info">
 
-            ${escapeHTML(document.module || "")}
+            ${escapeHTML(
+                item.module ||
+                ""
+            )}
 
-            ·
+            <br>
 
-            ${escapeHTML(document.topic || "Sin tema")}
+            ${escapeHTML(
+                item.topic ||
+                "Sin tema"
+            )}
 
         </p>
 
@@ -572,14 +850,21 @@ function createDocumentCard(document) {
 
         <div class="document-actions">
 
-            <button class="open-document">
+            <button
+                type="button"
+                class="open-document"
+            >
                 Abrir
             </button>
 
-            <button class="complete-document">
+
+            <button
+                type="button"
+                class="complete-document"
+            >
 
                 ${completed
-                    ? "Pendiente"
+                    ? "Marcar pendiente"
                     : "Completar"
                 }
 
@@ -587,40 +872,87 @@ function createDocumentCard(document) {
 
         </div>
 
+
+        <button
+            type="button"
+            class="delete-document"
+        >
+            Eliminar
+        </button>
+
     `;
 
 
     /* FAVORITO */
 
     card
-        .querySelector(".favorite-button")
-        .addEventListener("click", function () {
+        .querySelector(
+            ".favorite-button"
+        )
+        .addEventListener(
+            "click",
+            function () {
 
-            toggleFavorite(document);
+                toggleFavorite(
+                    item
+                );
 
-        });
-
-
-    /* COMPLETADO */
-
-    card
-        .querySelector(".complete-document")
-        .addEventListener("click", function () {
-
-            toggleCompleted(document);
-
-        });
+            }
+        );
 
 
     /* ABRIR */
 
     card
-        .querySelector(".open-document")
-        .addEventListener("click", function () {
+        .querySelector(
+            ".open-document"
+        )
+        .addEventListener(
+            "click",
+            function () {
 
-            openDocument(document);
+                openDocument(
+                    item
+                );
 
-        });
+            }
+        );
+
+
+    /* COMPLETADO */
+
+    card
+        .querySelector(
+            ".complete-document"
+        )
+        .addEventListener(
+            "click",
+            function () {
+
+                toggleCompleted(
+                    item
+                );
+
+            }
+        );
+
+
+    /* ELIMINAR */
+
+    card
+        .querySelector(
+            ".delete-document"
+        )
+        .addEventListener(
+            "click",
+            function () {
+
+                deleteDocument(
+                    item
+                );
+
+            }
+        );
 
 
     return card;
@@ -629,120 +961,49 @@ function createDocumentCard(document) {
 
 
 /* =========================================================
-   ICONO DEL ARCHIVO
-========================================================= */
-
-function getFileIcon(document) {
-
-    const path =
-        document.path ||
-        document.url ||
-        "";
-
-    const extension =
-        path
-            .split("?")[0]
-            .split(".")
-            .pop()
-            .toLowerCase();
-
-
-    if (extension === "pdf") {
-        return "📕";
-    }
-
-    if (
-        extension === "doc" ||
-        extension === "docx"
-    ) {
-        return "📘";
-    }
-
-    if (
-        extension === "xls" ||
-        extension === "xlsx"
-    ) {
-        return "📗";
-    }
-
-    if (
-        extension === "ppt" ||
-        extension === "pptx"
-    ) {
-        return "📙";
-    }
-
-    if (
-        extension === "jpg" ||
-        extension === "jpeg" ||
-        extension === "png" ||
-        extension === "gif" ||
-        extension === "webp"
-    ) {
-        return "🖼️";
-    }
-
-    if (
-        extension === "zip" ||
-        extension === "rar" ||
-        extension === "7z"
-    ) {
-        return "🗜️";
-    }
-
-    if (
-        extension === "html" ||
-        extension === "css" ||
-        extension === "js" ||
-        extension === "php" ||
-        extension === "java" ||
-        extension === "py"
-    ) {
-        return "💻";
-    }
-
-    if (
-        extension === "txt" ||
-        extension === "md"
-    ) {
-        return "📄";
-    }
-
-    return "📁";
-
-}
-
-
-/* =========================================================
-   SUBIR ARCHIVO
+   SUBIR CUALQUIER ARCHIVO
 ========================================================= */
 
 async function uploadDocument() {
 
     const title =
-        document.getElementById("title")
+        document
+            .getElementById(
+                "title"
+            )
             .value
             .trim();
 
 
-    const module =
-        document.getElementById("uploadModule")
+    const moduleName =
+        document
+            .getElementById(
+                "uploadModule"
+            )
             .value;
 
 
     const topic =
-        document.getElementById("topic")
+        document
+            .getElementById(
+                "topic"
+            )
             .value
             .trim();
 
 
     const type =
-        document.getElementById("type")
+        document
+            .getElementById(
+                "type"
+            )
             .value;
 
 
     const fileInput =
-        document.getElementById("file");
+        document.getElementById(
+            "file"
+        );
 
 
     const file =
@@ -750,13 +1011,19 @@ async function uploadDocument() {
 
 
     const status =
-        document.getElementById("uploadStatus");
+        document.getElementById(
+            "uploadStatus"
+        );
+
+
+    const button =
+        document.getElementById(
+            "uploadButton"
+        );
 
 
     status.textContent = "";
 
-
-    /* VALIDACIONES */
 
     if (!title) {
 
@@ -768,7 +1035,7 @@ async function uploadDocument() {
     }
 
 
-    if (!module) {
+    if (!moduleName) {
 
         status.textContent =
             "Selecciona un módulo.";
@@ -798,209 +1065,237 @@ async function uploadDocument() {
     }
 
 
+    button.disabled = true;
+
+    button.textContent =
+        "Subiendo...";
+
+
     try {
 
-        status.textContent =
-            "Subiendo archivo...";
-
-
         /*
-         * LIMPIAMOS LOS NOMBRES
+         * CREAMOS RUTA SEGURA
          */
 
         const moduleFolder =
-            cleanPath(module);
+            cleanPathPart(
+                moduleName
+            );
 
 
         const topicFolder =
-            cleanPath(topic);
+            cleanPathPart(
+                topic
+            );
 
 
-        const fileName =
-            cleanFileName(file.name);
+        const safeFileName =
+            cleanFileName(
+                file.name
+            );
+
+
+        const uniqueName =
+            Date.now() +
+            "_" +
+            safeFileName;
 
 
         /*
-         * RUTA FINAL
+         * MUY IMPORTANTE:
          *
-         * IMPORTANTE:
-         * NO empieza por /
+         * Nada de "/" al principio.
          */
 
-        const path =
+        const storagePath =
             moduleFolder +
             "/" +
             topicFolder +
             "/" +
-            Date.now() +
-            "_" +
-            fileName;
+            uniqueName;
 
 
-        console.log("Bucket:", CONFIG.bucket);
+        console.log(
+            "Subiendo a:",
+            STORAGE_BUCKET
+        );
 
-        console.log("Ruta:", path);
+
+        console.log(
+            "Ruta:",
+            storagePath
+        );
 
 
         /*
-         * SUBIR A STORAGE
+         * SUBIR ARCHIVO
          */
 
         const {
             data: uploadData,
             error: uploadError
-        } = await supabaseClient
-            .storage
-            .from(CONFIG.bucket)
-            .upload(
-                path,
-                file,
-                {
-                    cacheControl: "3600",
-                    upsert: false,
-                    contentType:
-                        file.type ||
-                        "application/octet-stream"
-                }
-            );
+        } =
+            await supabaseClient
+                .storage
+                .from(
+                    STORAGE_BUCKET
+                )
+                .upload(
+                    storagePath,
+                    file,
+                    {
+                        cacheControl:
+                            "3600",
+
+                        upsert:
+                            false,
+
+                        contentType:
+                            file.type ||
+                            "application/octet-stream"
+                    }
+                );
 
 
         if (uploadError) {
 
-            console.error(
-                "Error Storage:",
-                uploadError
-            );
-
-            status.textContent =
-                "Error: " +
-                uploadError.message;
-
-            return;
+            throw uploadError;
 
         }
 
 
         /*
-         * OBTENER URL
+         * URL PÚBLICA
          */
 
         const {
-            data: publicData
-        } = supabaseClient
-            .storage
-            .from(CONFIG.bucket)
-            .getPublicUrl(path);
+            data: urlData
+        } =
+            supabaseClient
+                .storage
+                .from(
+                    STORAGE_BUCKET
+                )
+                .getPublicUrl(
+                    storagePath
+                );
 
 
-        if (
-            !publicData ||
-            !publicData.publicUrl
-        ) {
-
-            status.textContent =
-                "El archivo se subió, pero no se pudo obtener su URL.";
-
-            return;
-
-        }
+        const publicUrl =
+            urlData.publicUrl;
 
 
         /*
-         * GUARDAR EN BASE DE DATOS
+         * GUARDAR EN TABLA FILES
          */
 
         const {
-            data: databaseData,
             error: databaseError
-        } = await supabaseClient
-            .from("files")
-            .insert([
+        } =
+            await supabaseClient
+                .from("files")
+                .insert({
 
-                {
-                    title: title,
-                    module: module,
-                    topic: topic,
-                    type: type,
-                    url: publicData.publicUrl,
-                    path: path,
-                    favorite: false,
-                    completed: false
-                }
+                    title:
+                        title,
 
-            ])
-            .select();
+                    module:
+                        moduleName,
+
+                    topic:
+                        topic,
+
+                    type:
+                        type,
+
+                    url:
+                        publicUrl,
+
+                    path:
+                        storagePath,
+
+                    favorite:
+                        false,
+
+                    completed:
+                        false
+
+                });
 
 
         if (databaseError) {
 
-            console.error(
-                "Error Base de Datos:",
-                databaseError
-            );
-
-
             /*
-             * EL ARCHIVO YA SE SUBIÓ.
-             * NO LO BORRAMOS.
+             * Si falla la BD,
+             * borramos el archivo
+             * que acabamos de subir.
              */
 
-            status.textContent =
-                "El archivo se subió, pero hubo un error al guardarlo en la biblioteca.";
+            await supabaseClient
+                .storage
+                .from(
+                    STORAGE_BUCKET
+                )
+                .remove([
+                    storagePath
+                ]);
 
-            return;
+
+            throw databaseError;
 
         }
 
-
-        /*
-         * TODO CORRECTO
-         */
 
         status.textContent =
             "Archivo subido correctamente.";
 
 
-        /*
-         * LIMPIAR FORMULARIO
-         */
-
         document
-            .getElementById("uploadForm")
+            .getElementById(
+                "uploadForm"
+            )
             .reset();
 
-
-        /*
-         * ACTUALIZAR BIBLIOTECA
-         */
 
         await loadDocuments();
 
 
-        /*
-         * CERRAR MODAL
-         */
+        setTimeout(
+            function () {
 
-        setTimeout(function () {
+                closeModal();
 
-            closeModal();
+                status.textContent =
+                    "";
 
-            status.textContent = "";
-
-        }, 700);
+            },
+            700
+        );
 
 
     } catch (error) {
 
         console.error(
-            "Error general:",
+            "ERROR SUBIDA:",
             error
         );
 
 
         status.textContent =
-            "Error al subir el archivo: " +
-            error.message;
+            "Error: " +
+            (
+                error.message ||
+                "No se pudo subir el archivo."
+            );
+
+    } finally {
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "Subir a DAMFLIX";
 
     }
 
@@ -1008,75 +1303,15 @@ async function uploadDocument() {
 
 
 /* =========================================================
-   LIMPIAR RUTA
+   ABRIR ARCHIVO
 ========================================================= */
 
-function cleanPath(text) {
+function openDocument(item) {
 
-    return text
-
-        .normalize("NFD")
-
-        .replace(
-            /[\u0300-\u036f]/g,
-            ""
-        )
-
-        .replace(
-            /[^a-zA-Z0-9_-]/g,
-            "_"
-        )
-
-        .replace(
-            /^_+|_+$/g,
-            ""
-        )
-
-        || "sin_nombre";
-
-}
-
-
-/* =========================================================
-   LIMPIAR NOMBRE DE ARCHIVO
-========================================================= */
-
-function cleanFileName(text) {
-
-    return text
-
-        .normalize("NFD")
-
-        .replace(
-            /[\u0300-\u036f]/g,
-            ""
-        )
-
-        .replace(
-            /[^a-zA-Z0-9._-]/g,
-            "_"
-        )
-
-        .replace(
-            /^_+|_+$/g,
-            ""
-        )
-
-        || "archivo";
-
-}
-
-
-/* =========================================================
-   ABRIR DOCUMENTO
-========================================================= */
-
-function openDocument(document) {
-
-    if (!document.url) {
+    if (!item.url) {
 
         alert(
-            "Este documento no tiene una URL."
+            "No se encontró el archivo."
         );
 
         return;
@@ -1085,7 +1320,7 @@ function openDocument(document) {
 
 
     window.open(
-        document.url,
+        item.url,
         "_blank"
     );
 
@@ -1093,35 +1328,48 @@ function openDocument(document) {
 
 
 /* =========================================================
-   FAVORITO
+   FAVORITOS
 ========================================================= */
 
-async function toggleFavorite(document) {
+async function toggleFavorite(item) {
 
     const newValue =
-        document.favorite !== true;
+        item.favorite !== true;
 
 
     const {
         error
-    } = await supabaseClient
-        .from("files")
-        .update({
-            favorite: newValue
-        })
-        .eq("id", document.id);
+    } =
+        await supabaseClient
+            .from("files")
+            .update({
+
+                favorite:
+                    newValue
+
+            })
+            .eq(
+                "id",
+                item.id
+            );
 
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
+
+        alert(
+            "No se pudo cambiar el favorito."
+        );
 
         return;
 
     }
 
 
-    document.favorite =
+    item.favorite =
         newValue;
 
 
@@ -1134,32 +1382,45 @@ async function toggleFavorite(document) {
    COMPLETADO
 ========================================================= */
 
-async function toggleCompleted(document) {
+async function toggleCompleted(item) {
 
     const newValue =
-        document.completed !== true;
+        item.completed !== true;
 
 
     const {
         error
-    } = await supabaseClient
-        .from("files")
-        .update({
-            completed: newValue
-        })
-        .eq("id", document.id);
+    } =
+        await supabaseClient
+            .from("files")
+            .update({
+
+                completed:
+                    newValue
+
+            })
+            .eq(
+                "id",
+                item.id
+            );
 
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
+
+        alert(
+            "No se pudo cambiar el estado."
+        );
 
         return;
 
     }
 
 
-    document.completed =
+    item.completed =
         newValue;
 
 
@@ -1169,17 +1430,403 @@ async function toggleCompleted(document) {
 
 
 /* =========================================================
-   SEGURIDAD HTML
+   ELIMINAR DOCUMENTO
+========================================================= */
+
+async function deleteDocument(item) {
+
+    const confirmation =
+        confirm(
+            "¿Seguro que quieres eliminar \"" +
+            item.title +
+            "\"?"
+        );
+
+
+    if (!confirmation) {
+
+        return;
+
+    }
+
+
+    try {
+
+        /*
+         * BORRAR STORAGE
+         */
+
+        if (item.path) {
+
+            const {
+                error: storageError
+            } =
+                await supabaseClient
+                    .storage
+                    .from(
+                        STORAGE_BUCKET
+                    )
+                    .remove([
+                        item.path
+                    ]);
+
+
+            if (storageError) {
+
+                console.error(
+                    storageError
+                );
+
+            }
+
+        }
+
+
+        /*
+         * BORRAR TABLA
+         */
+
+        const {
+            error: databaseError
+        } =
+            await supabaseClient
+                .from("files")
+                .delete()
+                .eq(
+                    "id",
+                    item.id
+                );
+
+
+        if (databaseError) {
+
+            throw databaseError;
+
+        }
+
+
+        await loadDocuments();
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+
+        alert(
+            "No se pudo eliminar el documento."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   LIMPIAR CARPETAS
+========================================================= */
+
+function cleanPathPart(text) {
+
+    let result =
+        text
+            .normalize("NFD")
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
+            .replace(
+                /[^a-zA-Z0-9_-]/g,
+                "_"
+            )
+            .replace(
+                /_+/g,
+                "_"
+            )
+            .replace(
+                /^_+|_+$/g,
+                ""
+            );
+
+
+    if (!result) {
+
+        result =
+            "sin_nombre";
+
+    }
+
+
+    return result;
+
+}
+
+
+/* =========================================================
+   LIMPIAR NOMBRE ARCHIVO
+========================================================= */
+
+function cleanFileName(fileName) {
+
+    /*
+     * Separamos nombre y extensión
+     */
+
+    const lastDot =
+        fileName.lastIndexOf(".");
+
+
+    let name =
+        fileName;
+
+
+    let extension =
+        "";
+
+
+    if (
+        lastDot > 0
+    ) {
+
+        name =
+            fileName.substring(
+                0,
+                lastDot
+            );
+
+
+        extension =
+            fileName.substring(
+                lastDot + 1
+            );
+
+    }
+
+
+    name =
+        name
+            .normalize("NFD")
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
+            .replace(
+                /[^a-zA-Z0-9_-]/g,
+                "_"
+            )
+            .replace(
+                /_+/g,
+                "_"
+            )
+            .replace(
+                /^_+|_+$/g,
+                ""
+            );
+
+
+    extension =
+        extension
+            .replace(
+                /[^a-zA-Z0-9]/g,
+                ""
+            )
+            .toLowerCase();
+
+
+    if (!name) {
+
+        name =
+            "archivo";
+
+    }
+
+
+    if (extension) {
+
+        return (
+            name +
+            "." +
+            extension
+        );
+
+    }
+
+
+    return name;
+
+}
+
+
+/* =========================================================
+   ICONOS SEGÚN ARCHIVO
+========================================================= */
+
+function getFileIcon(path) {
+
+    const cleanPath =
+        path
+            .split("?")[0];
+
+
+    const parts =
+        cleanPath.split(".");
+
+
+    let extension = "";
+
+
+    if (
+        parts.length > 1
+    ) {
+
+        extension =
+            parts
+                .pop()
+                .toLowerCase();
+
+    }
+
+
+    if (
+        extension === "pdf"
+    ) {
+
+        return "📕";
+
+    }
+
+
+    if (
+        extension === "doc" ||
+        extension === "docx"
+    ) {
+
+        return "📘";
+
+    }
+
+
+    if (
+        extension === "xls" ||
+        extension === "xlsx" ||
+        extension === "csv"
+    ) {
+
+        return "📗";
+
+    }
+
+
+    if (
+        extension === "ppt" ||
+        extension === "pptx"
+    ) {
+
+        return "📙";
+
+    }
+
+
+    if (
+        extension === "png" ||
+        extension === "jpg" ||
+        extension === "jpeg" ||
+        extension === "gif" ||
+        extension === "webp" ||
+        extension === "svg"
+    ) {
+
+        return "🖼️";
+
+    }
+
+
+    if (
+        extension === "zip" ||
+        extension === "rar" ||
+        extension === "7z"
+    ) {
+
+        return "🗜️";
+
+    }
+
+
+    if (
+        extension === "java" ||
+        extension === "js" ||
+        extension === "html" ||
+        extension === "css" ||
+        extension === "php" ||
+        extension === "py" ||
+        extension === "c" ||
+        extension === "cpp" ||
+        extension === "sql" ||
+        extension === "xml" ||
+        extension === "json"
+    ) {
+
+        return "💻";
+
+    }
+
+
+    if (
+        extension === "mp3" ||
+        extension === "wav" ||
+        extension === "ogg"
+    ) {
+
+        return "🎵";
+
+    }
+
+
+    if (
+        extension === "mp4" ||
+        extension === "mov" ||
+        extension === "avi" ||
+        extension === "mkv"
+    ) {
+
+        return "🎬";
+
+    }
+
+
+    if (
+        extension === "txt" ||
+        extension === "md"
+    ) {
+
+        return "📄";
+
+    }
+
+
+    return "📁";
+
+}
+
+
+/* =========================================================
+   EVITAR HTML EN LOS TÍTULOS
 ========================================================= */
 
 function escapeHTML(text) {
 
-    const div =
-        document.createElement("div");
+    const element =
+        document.createElement(
+            "div"
+        );
 
-    div.textContent =
-        text;
 
-    return div.innerHTML;
+    element.textContent =
+        String(text);
+
+
+    return element.innerHTML;
 
 }
