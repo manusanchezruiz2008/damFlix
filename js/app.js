@@ -1318,6 +1318,25 @@ function openDocument(item) {
 
     }
 
+    const extension = item.path
+        .split("?")[0]
+        .split(".")
+        .pop()
+        .toLowerCase();
+
+    if (
+        extension === "html" ||
+        extension === "htm"
+    ) {
+
+        window.open(
+            item.url,
+            "_blank"
+        );
+
+        return;
+
+    }
 
     window.open(
         item.url,
