@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAMFLIX | Tu biblioteca de DAM</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="index.html">DAMFLIX</a>
+    <nav>
+      <a href="#modulos">Módulos</a>
+      <a href="#biblioteca">Biblioteca</a>
+      <button id="openUpload" class="btn small">+ Subir PDF</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">1º DAM · 2026/2027</p>
+        <h1>Todo tu curso, en un solo sitio.</h1>
+        <p>Guarda temas, apuntes, ejercicios y PDFs. Encuentra lo que necesitas sin rebuscar por carpetas.</p>
+        <div class="hero-actions">
+          <a href="#biblioteca" class="btn">▶ Ver biblioteca</a>
+          <button id="heroUpload" class="btn secondary">+ Subir archivo</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="modulos">
+      <div class="section-heading">
+        <h2>Módulos</h2>
+        <span>Elige una asignatura</span>
+      </div>
+      <div id="moduleRow" class="card-row"></div>
+    </section>
+
+    <section class="section" id="biblioteca">
+      <div class="section-heading library-heading">
+        <div>
+          <h2>Mi biblioteca</h2>
+          <span>Todos tus documentos</span>
+        </div>
+        <input id="searchInput" type="search" placeholder="Buscar apuntes, tema, módulo...">
+      </div>
+
+      <div class="filters">
+        <button class="filter active" data-filter="Todos">Todos</button>
+        <button class="filter" data-filter="Favoritos">★ Favoritos</button>
+        <button class="filter" data-filter="Pendiente">Pendientes</button>
+        <button class="filter" data-filter="Completado">Completados</button>
+      </div>
+
+      <div id="documentGrid" class="document-grid"></div>
+      <p id="emptyState" class="empty hidden">Todavía no hay documentos que coincidan.</p>
+    </section>
+  </main>
+
+  <div id="uploadModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <button id="closeUpload" class="close">×</button>
+      <h2>Subir documento</h2>
+      <p class="muted">Se guardará en tu bucket de Supabase.</p>
+
+      <form id="uploadForm">
+        <label>Título
+          <input id="title" required placeholder="Ej. Tema 1 - Sistemas de almacenamiento">
+        </label>
+
+        <label>Módulo
+          <select id="module" required></select>
+        </label>
+
+        <label>Tipo
+          <select id="type">
+            <option>Apuntes</option>
+            <option>Tema</option>
+            <option>Ejercicio</option>
+            <option>Examen</option>
+            <option>Resumen</option>
+            <option>Proyecto</option>
+          </select>
+        </label>
+
+        <label>Archivo PDF
+          <input id="file" type="file" accept=".pdf,application/pdf" required>
+        </label>
+
+        <button class="btn full" type="submit">Subir a DAMFLIX</button>
+        <p id="uploadStatus" class="status"></p>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    DAMFLIX · Hecho para organizar 1º DAM
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
