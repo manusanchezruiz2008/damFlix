@@ -258,6 +258,37 @@
     </div>
 
 
+    <!-- VISOR HTML -->
+    <div id="htmlViewer" class="html-viewer">
+
+        <div class="html-viewer-bar">
+
+            <span id="htmlViewerTitle" class="html-viewer-title"></span>
+
+            <div class="html-viewer-actions">
+
+                <button type="button" id="htmlViewerNewTab">
+                    Abrir en pestaña nueva
+                </button>
+
+                <button type="button" id="closeHtmlViewer">
+                    ✕ Cerrar
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- sandbox sin allow-same-origin: el HTML subido queda aislado de tu web -->
+        <iframe
+            id="htmlViewerFrame"
+            class="html-viewer-frame"
+            sandbox="allow-scripts allow-popups allow-forms"
+        ></iframe>
+
+    </div>
+
+
     <footer>
         DAMFLIX · Tu biblioteca de 1º DAM
     </footer>

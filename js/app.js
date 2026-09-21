@@ -48,6 +48,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     setupEvents();
 
+    setupHtmlViewer();
+
     try {
 
         if (
@@ -1067,6 +1069,19 @@ async function uploadDocument() {
     }
 }
 
+function isHtmlFile(item) {
+
+    const source =
+        (item.path || item.name || item.url || "")
+            .split("?")[0]
+            .toLowerCase();
+
+    return (
+        source.endsWith(".html") ||
+        source.endsWith(".htm")
+    );
+}
+
 function openDocument(item) {
 
     if (!item.url) {
@@ -1078,9 +1093,205 @@ function openDocument(item) {
         return;
     }
 
+    // Supabase sirve los .html como texto plano,
+    // así que los renderizamos nosotros en un visor.
+    if (isHtmlFile(item)) {
+
+        openHtmlViewer(item);
+
+        return;
+    }
+
     window.open(
         item.url,
         "_blank"
+    );
+}
+
+let currentHtmlBlobUrl = null;
+
+async function fetchHtmlAsText(item) {
+
+    const response =
+        await fetch(item.url);
+
+    if (!response.ok) {
+
+        throw new Error(
+            "HTTP " + response.status
+        );
+
+    }
+
+    return await response.text();
+}
+
+// Hace que las rutas relativas (css, imágenes, js)
+// apunten a la carpeta del archivo en Supabase.
+function addBaseTag(html, fileUrl) {
+
+    const baseHref =
+        fileUrl.substring(
+            0,
+            fileUrl.lastIndexOf("/") + 1
+        );
+
+    const baseTag =
+        '<base href="' + baseHref + '">';
+
+    if (/<head[^>]*>/i.test(html)) {
+
+        return html.replace(
+            /<head[^>]*>/i,
+            function (match) {
+
+                return match + baseTag;
+
+            }
+        );
+
+    }
+
+    return baseTag + html;
+}
+
+async function openHtmlViewer(item) {
+
+    const viewer =
+        document.getElementById("htmlViewer");
+
+    const frame =
+        document.getElementById("htmlViewerFrame");
+
+    const title =
+        document.getElementById("htmlViewerTitle");
+
+    if (!viewer || !frame) {
+        return;
+    }
+
+    title.textContent =
+        item.title ||
+        item.name ||
+        "Documento";
+
+    frame.srcdoc =
+        "<p style='font-family:Arial;padding:20px'>" +
+        "Cargando...</p>";
+
+    viewer.classList.add("show");
+
+    document.body.style.overflow = "hidden";
+
+    try {
+
+        const html =
+            await fetchHtmlAsText(item);
+
+        const finalHtml =
+            addBaseTag(html, item.url);
+
+        // Guardamos una versión Blob por si quiere
+        // abrirla en una pestaña nueva.
+        if (currentHtmlBlobUrl) {
+
+            URL.revokeObjectURL(
+                currentHtmlBlobUrl
+            );
+
+        }
+
+        currentHtmlBlobUrl =
+            URL.createObjectURL(
+                new Blob(
+                    [finalHtml],
+                    { type: "text/html" }
+                )
+            );
+
+        frame.srcdoc = finalHtml;
+
+    } catch (error) {
+
+        console.error(
+            "Error abriendo HTML:",
+            error
+        );
+
+        frame.srcdoc =
+            "<p style='font-family:Arial;padding:20px'>" +
+            "No se pudo cargar el archivo.</p>";
+
+    }
+}
+
+function closeHtmlViewer() {
+
+    const viewer =
+        document.getElementById("htmlViewer");
+
+    const frame =
+        document.getElementById("htmlViewerFrame");
+
+    if (viewer) {
+        viewer.classList.remove("show");
+    }
+
+    if (frame) {
+        frame.srcdoc = "";
+    }
+
+    document.body.style.overflow = "";
+}
+
+function setupHtmlViewer() {
+
+    const closeButton =
+        document.getElementById("closeHtmlViewer");
+
+    const newTabButton =
+        document.getElementById("htmlViewerNewTab");
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            closeHtmlViewer
+        );
+
+    }
+
+    if (newTabButton) {
+
+        newTabButton.addEventListener(
+            "click",
+            function () {
+
+                if (currentHtmlBlobUrl) {
+
+                    window.open(
+                        currentHtmlBlobUrl,
+                        "_blank"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (event.key === "Escape") {
+
+                closeHtmlViewer();
+
+            }
+
+        }
     );
 }
 

@@ -653,3 +653,79 @@ footer {
     }
 
 }
+
+
+/* =========================
+   VISOR HTML
+========================= */
+
+.html-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+
+    display: none;
+    flex-direction: column;
+
+    background: #080808;
+}
+
+.html-viewer.show {
+    display: flex;
+}
+
+.html-viewer-bar {
+    height: 55px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+
+    padding: 0 20px;
+
+    background: #0d0d0d;
+    border-bottom: 1px solid #202020;
+}
+
+.html-viewer-title {
+    overflow: hidden;
+
+    font-weight: bold;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.html-viewer-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.html-viewer-actions button {
+    padding: 8px 14px;
+
+    color: #ffffff;
+    background: #1c1c1c;
+
+    border: 1px solid #333333;
+    border-radius: 6px;
+
+    cursor: pointer;
+}
+
+.html-viewer-actions button:hover {
+    background: #e50914;
+    border-color: #e50914;
+}
+
+.html-viewer-frame {
+    flex: 1;
+
+    width: 100%;
+    border: 0;
+
+    /* fondo blanco: la mayoría de HTML asume fondo claro */
+    background: #ffffff;
+}
