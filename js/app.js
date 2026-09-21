@@ -9,6 +9,8 @@ const modules = [
   ["♻️", "Sostenibilidad"]
 ];
 
+console.log("DAMFLIX app.js cargado correctamente");
+
 const sampleDocs = [
   {
     id: "demo-1",
