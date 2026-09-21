@@ -1,14 +1,12 @@
 /* =========================================================
    CONFIGURACIÓN SUPABASE
-
-   PEGA AQUÍ TUS DATOS REALES.
 ========================================================= */
 
 const SUPABASE_URL =
     "https://sriifbloyfivdyfisixn.supabase.co";
 
 const SUPABASE_KEY =
-    "sb_publishable_l26P02t68OP-dPzfgQcxeg_9xrc7aJT";
+    "PEGA_AQUI_TU_CLAVE_ACTUAL";
 
 const STORAGE_BUCKET =
     "files";
@@ -127,10 +125,6 @@ function createModules() {
 
     modules.forEach(function (module) {
 
-        /* =====================
-           TARJETA
-        ===================== */
-
         const card =
             document.createElement(
                 "div"
@@ -177,10 +171,6 @@ function createModules() {
         );
 
 
-        /* =====================
-           SELECT FILTRO
-        ===================== */
-
         const filterOption =
             document.createElement(
                 "option"
@@ -196,10 +186,6 @@ function createModules() {
             filterOption
         );
 
-
-        /* =====================
-           SELECT SUBIDA
-        ===================== */
 
         const uploadOption =
             document.createElement(
@@ -227,10 +213,6 @@ function createModules() {
 
 function setupEvents() {
 
-    /* =========================
-       ABRIR MODAL
-    ========================= */
-
     document
         .getElementById(
             "openUpload"
@@ -250,10 +232,6 @@ function setupEvents() {
         );
 
 
-    /* =========================
-       CERRAR MODAL
-    ========================= */
-
     document
         .getElementById(
             "closeUpload"
@@ -263,10 +241,6 @@ function setupEvents() {
             closeModal
         );
 
-
-    /* =========================
-       CERRAR CLICK FUERA
-    ========================= */
 
     document
         .getElementById(
@@ -288,10 +262,6 @@ function setupEvents() {
         );
 
 
-    /* =========================
-       FORMULARIO
-    ========================= */
-
     document
         .getElementById(
             "uploadForm"
@@ -307,10 +277,6 @@ function setupEvents() {
             }
         );
 
-
-    /* =========================
-       SELECT MÓDULO
-    ========================= */
 
     document
         .getElementById(
@@ -328,10 +294,6 @@ function setupEvents() {
         );
 
 
-    /* =========================
-       BUSCADOR
-    ========================= */
-
     document
         .getElementById(
             "searchInput"
@@ -341,10 +303,6 @@ function setupEvents() {
             renderDocuments
         );
 
-
-    /* =========================
-       FILTROS
-    ========================= */
 
     const filterButtons =
         document.querySelectorAll(
@@ -477,7 +435,7 @@ function closeModal() {
 
 
 /* =========================================================
-   CARGAR DOCUMENTOS DE SUPABASE
+   CARGAR DOCUMENTOS
 ========================================================= */
 
 async function loadDocuments() {
@@ -581,10 +539,6 @@ function renderDocuments() {
         documentsList.slice();
 
 
-    /* =========================
-       MÓDULO
-    ========================= */
-
     if (currentModule) {
 
         results =
@@ -601,10 +555,6 @@ function renderDocuments() {
 
     }
 
-
-    /* =========================
-       BUSCADOR
-    ========================= */
 
     if (search) {
 
@@ -636,10 +586,6 @@ function renderDocuments() {
     }
 
 
-    /* =========================
-       FAVORITOS
-    ========================= */
-
     if (
         currentFilter ===
         "favorite"
@@ -658,10 +604,6 @@ function renderDocuments() {
 
     }
 
-
-    /* =========================
-       PENDIENTES
-    ========================= */
 
     if (
         currentFilter ===
@@ -682,10 +624,6 @@ function renderDocuments() {
     }
 
 
-    /* =========================
-       COMPLETADOS
-    ========================= */
-
     if (
         currentFilter ===
         "completed"
@@ -704,10 +642,6 @@ function renderDocuments() {
 
     }
 
-
-    /* =========================
-       VACÍO
-    ========================= */
 
     if (
         results.length === 0
@@ -883,8 +817,6 @@ function createDocumentCard(item) {
     `;
 
 
-    /* FAVORITO */
-
     card
         .querySelector(
             ".favorite-button"
@@ -900,8 +832,6 @@ function createDocumentCard(item) {
             }
         );
 
-
-    /* ABRIR */
 
     card
         .querySelector(
@@ -919,8 +849,6 @@ function createDocumentCard(item) {
         );
 
 
-    /* COMPLETADO */
-
     card
         .querySelector(
             ".complete-document"
@@ -936,8 +864,6 @@ function createDocumentCard(item) {
             }
         );
 
-
-    /* ELIMINAR */
 
     card
         .querySelector(
@@ -1101,12 +1027,6 @@ async function uploadDocument() {
             safeFileName;
 
 
-        /*
-         * MUY IMPORTANTE:
-         *
-         * Nada de "/" al principio.
-         */
-
         const storagePath =
             moduleFolder +
             "/" +
@@ -1124,6 +1044,127 @@ async function uploadDocument() {
         console.log(
             "Ruta:",
             storagePath
+        );
+
+
+        /*
+         * DETECTAR TIPO DE ARCHIVO
+         *
+         * Esto es especialmente importante
+         * para HTML.
+         */
+
+        const extension =
+            file.name
+                .split(".")
+                .pop()
+                .toLowerCase();
+
+
+        let contentType =
+            file.type;
+
+
+        /*
+         * HTML
+         */
+
+        if (
+            extension === "html" ||
+            extension === "htm"
+        ) {
+
+            contentType =
+                "text/html";
+
+        }
+
+
+        /*
+         * CSS
+         */
+
+        else if (
+            extension === "css"
+        ) {
+
+            contentType =
+                "text/css";
+
+        }
+
+
+        /*
+         * JAVASCRIPT
+         */
+
+        else if (
+            extension === "js"
+        ) {
+
+            contentType =
+                "text/javascript";
+
+        }
+
+
+        /*
+         * JSON
+         */
+
+        else if (
+            extension === "json"
+        ) {
+
+            contentType =
+                "application/json";
+
+        }
+
+
+        /*
+         * SVG
+         */
+
+        else if (
+            extension === "svg"
+        ) {
+
+            contentType =
+                "image/svg+xml";
+
+        }
+
+
+        /*
+         * TXT
+         */
+
+        else if (
+            extension === "txt"
+        ) {
+
+            contentType =
+                "text/plain";
+
+        }
+
+
+        /*
+         * SI EL NAVEGADOR NO DETECTA EL TIPO
+         */
+
+        if (!contentType) {
+
+            contentType =
+                "application/octet-stream";
+
+        }
+
+
+        console.log(
+            "Content-Type:",
+            contentType
         );
 
 
@@ -1151,8 +1192,7 @@ async function uploadDocument() {
                             false,
 
                         contentType:
-                            file.type ||
-                            "application/octet-stream"
+                            contentType
                     }
                 );
 
@@ -1196,6 +1236,9 @@ async function uploadDocument() {
                 .from("files")
                 .insert({
 
+                    name:
+                        file.name,
+
                     title:
                         title,
 
@@ -1226,9 +1269,8 @@ async function uploadDocument() {
         if (databaseError) {
 
             /*
-             * Si falla la BD,
-             * borramos el archivo
-             * que acabamos de subir.
+             * SI FALLA LA BD,
+             * BORRAMOS EL ARCHIVO
              */
 
             await supabaseClient
@@ -1318,25 +1360,6 @@ function openDocument(item) {
 
     }
 
-    const extension = item.path
-        .split("?")[0]
-        .split(".")
-        .pop()
-        .toLowerCase();
-
-    if (
-        extension === "html" ||
-        extension === "htm"
-    ) {
-
-        window.open(
-            item.url,
-            "_blank"
-        );
-
-        return;
-
-    }
 
     window.open(
         item.url,
@@ -1588,10 +1611,6 @@ function cleanPathPart(text) {
 ========================================================= */
 
 function cleanFileName(fileName) {
-
-    /*
-     * Separamos nombre y extensión
-     */
 
     const lastDot =
         fileName.lastIndexOf(".");
