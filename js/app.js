@@ -1,351 +1,754 @@
-const SUPABASE_URL = "https://sriifbloyfivdyfisixn.supabase.co";
-const SUPABASE_KEY = "sb_publishable_l26P02t68OP-dPzfgQcxeg_9xrc7aJT";
-const STORAGE_BUCKET = "files";
+const SUPABASE_URL =
+    "https://sriifbloyfivdyfisixn.supabase.co";
 
-const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+const SUPABASE_KEY =
+    "sb_publishable_l26P02t68OP-dPzfgQcxeg_9xrc7aJT";
+
+const STORAGE_BUCKET =
+    "files";
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
 
 const modules = [
-    { name: "Programación", icon: "💻" },
-    { name: "Bases de Datos", icon: "🗄️" },
-    { name: "Entornos de Desarrollo", icon: "🛠️" },
-    { name: "Sistemas Informáticos", icon: "🖥️" },
-    { name: "Lenguajes de Marcas", icon: "🌐" },
-    { name: "Digitalización", icon: "🔢" },
-    { name: "IPE I", icon: "💼" },
-    { name: "Sostenibilidad", icon: "♻️" }
+    {
+        name: "Programación",
+        icon: "💻"
+    },
+    {
+        name: "Bases de Datos",
+        icon: "🗄️"
+    },
+    {
+        name: "Entornos de Desarrollo",
+        icon: "🛠️"
+    },
+    {
+        name: "Sistemas Informáticos",
+        icon: "🖥️"
+    },
+    {
+        name: "Lenguajes de Marcas",
+        icon: "🌐"
+    },
+    {
+        name: "Digitalización",
+        icon: "🔢"
+    },
+    {
+        name: "IPE I",
+        icon: "💼"
+    },
+    {
+        name: "Sostenibilidad",
+        icon: "♻️"
+    }
 ];
 
 let documentsList = [];
 let currentModule = "";
 let currentFilter = "all";
 
-document.addEventListener("DOMContentLoaded", function () {
-    createModules();
-    setupEvents();
-    loadDocuments();
-});
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+        createModules();
+        setupEvents();
+        loadDocuments();
+    }
+);
 
 function createModules() {
-    const moduleRow = document.getElementById("moduleRow");
-    const moduleFilter = document.getElementById("moduleFilter");
-    const uploadModule = document.getElementById("uploadModule");
+
+    const moduleRow =
+        document.getElementById("moduleRow");
+
+    const moduleFilter =
+        document.getElementById("moduleFilter");
+
+    const uploadModule =
+        document.getElementById("uploadModule");
 
     modules.forEach(function (module) {
-        const card = document.createElement("div");
 
-        card.className = "module-card";
-        card.dataset.module = module.name;
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "module-card";
+
+        card.dataset.module =
+            module.name;
 
         card.innerHTML = `
-            <div class="module-icon">${module.icon}</div>
-            <h3>${escapeHTML(module.name)}</h3>
-            <p>Ver documentos</p>
+            <div class="module-icon">
+                ${module.icon}
+            </div>
+
+            <h3>
+                ${escapeHTML(module.name)}
+            </h3>
+
+            <p>
+                Ver documentos
+            </p>
         `;
 
-        card.addEventListener("click", function () {
-            selectModule(module.name);
-        });
+        card.addEventListener(
+            "click",
+            function () {
+                selectModule(module.name);
+            }
+        );
 
         moduleRow.appendChild(card);
 
-        const filterOption = document.createElement("option");
-        filterOption.value = module.name;
-        filterOption.textContent = module.name;
-        moduleFilter.appendChild(filterOption);
+        const filterOption =
+            document.createElement("option");
 
-        const uploadOption = document.createElement("option");
-        uploadOption.value = module.name;
-        uploadOption.textContent = module.name;
-        uploadModule.appendChild(uploadOption);
+        filterOption.value =
+            module.name;
+
+        filterOption.textContent =
+            module.name;
+
+        moduleFilter.appendChild(
+            filterOption
+        );
+
+        const uploadOption =
+            document.createElement("option");
+
+        uploadOption.value =
+            module.name;
+
+        uploadOption.textContent =
+            module.name;
+
+        uploadModule.appendChild(
+            uploadOption
+        );
+
     });
 }
 
 function setupEvents() {
-    document.getElementById("openUpload").addEventListener("click", function () {
-        document.getElementById("uploadModal").classList.add("show");
-    });
 
-    document.getElementById("closeUpload").addEventListener("click", closeModal);
+    document
+        .getElementById("openUpload")
+        .addEventListener(
+            "click",
+            function () {
 
-    document.getElementById("uploadModal").addEventListener("click", function (event) {
-        if (event.target === this) {
-            closeModal();
+                document
+                    .getElementById("uploadModal")
+                    .classList
+                    .add("show");
+
+            }
+        );
+
+    document
+        .getElementById("closeUpload")
+        .addEventListener(
+            "click",
+            closeModal
+        );
+
+    document
+        .getElementById("uploadModal")
+        .addEventListener(
+            "click",
+            function (event) {
+
+                if (
+                    event.target === this
+                ) {
+                    closeModal();
+                }
+
+            }
+        );
+
+    document
+        .getElementById("uploadForm")
+        .addEventListener(
+            "submit",
+            function (event) {
+
+                event.preventDefault();
+
+                uploadDocument();
+
+            }
+        );
+
+    document
+        .getElementById("moduleFilter")
+        .addEventListener(
+            "change",
+            function () {
+
+                selectModule(
+                    this.value
+                );
+
+            }
+        );
+
+    document
+        .getElementById("searchInput")
+        .addEventListener(
+            "input",
+            renderDocuments
+        );
+
+    const filterButtons =
+        document.querySelectorAll(".filter");
+
+    filterButtons.forEach(
+        function (button) {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    filterButtons.forEach(
+                        function (item) {
+
+                            item.classList.remove(
+                                "active"
+                            );
+
+                        }
+                    );
+
+                    this.classList.add(
+                        "active"
+                    );
+
+                    currentFilter =
+                        this.dataset.filter;
+
+                    renderDocuments();
+
+                }
+            );
+
         }
-    });
-
-    document.getElementById("uploadForm").addEventListener("submit", function (event) {
-        event.preventDefault();
-        uploadDocument();
-    });
-
-    document.getElementById("moduleFilter").addEventListener("change", function () {
-        selectModule(this.value);
-    });
-
-    document.getElementById("searchInput").addEventListener("input", renderDocuments);
-
-    const filterButtons = document.querySelectorAll(".filter");
-
-    filterButtons.forEach(function (button) {
-        button.addEventListener("click", function () {
-            filterButtons.forEach(function (item) {
-                item.classList.remove("active");
-            });
-
-            this.classList.add("active");
-            currentFilter = this.dataset.filter;
-
-            renderDocuments();
-        });
-    });
+    );
 }
 
 function selectModule(moduleName) {
-    currentModule = moduleName;
 
-    document.getElementById("moduleFilter").value = moduleName;
+    currentModule =
+        moduleName;
 
-    document.querySelectorAll(".module-card").forEach(function (card) {
-        if (card.dataset.module === moduleName) {
-            card.classList.add("selected");
-        } else {
-            card.classList.remove("selected");
-        }
-    });
+    document
+        .getElementById("moduleFilter")
+        .value =
+        moduleName;
 
-    const subtitle = document.getElementById("librarySubtitle");
+    document
+        .querySelectorAll(".module-card")
+        .forEach(
+            function (card) {
+
+                if (
+                    card.dataset.module ===
+                    moduleName
+                ) {
+
+                    card.classList.add(
+                        "selected"
+                    );
+
+                } else {
+
+                    card.classList.remove(
+                        "selected"
+                    );
+
+                }
+
+            }
+        );
+
+    const subtitle =
+        document.getElementById(
+            "librarySubtitle"
+        );
 
     if (moduleName) {
-        subtitle.textContent = moduleName;
+
+        subtitle.textContent =
+            moduleName;
+
     } else {
-        subtitle.textContent = "Todos tus documentos";
+
+        subtitle.textContent =
+            "Todos tus documentos";
+
     }
 
     renderDocuments();
 }
 
 function closeModal() {
-    document.getElementById("uploadModal").classList.remove("show");
+
+    document
+        .getElementById("uploadModal")
+        .classList
+        .remove("show");
+
 }
 
 async function loadDocuments() {
-    const grid = document.getElementById("documentGrid");
 
-    grid.innerHTML = '<div class="empty">Cargando documentos...</div>';
+    const grid =
+        document.getElementById(
+            "documentGrid"
+        );
+
+    grid.innerHTML =
+        '<div class="empty">Cargando documentos...</div>';
 
     try {
-        const { data, error } = await supabaseClient
-            .from("files")
-            .select("*")
-            .order("created_at", {
-                ascending: false
-            });
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("files")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
 
         if (error) {
-            console.error("Error leyendo files:", error);
 
-            grid.innerHTML = `
+            console.error(
+                "Error leyendo files:",
+                error
+            );
+
+            grid.innerHTML =
+                `
                 <div class="empty">
                     Error al cargar los documentos:
                     ${escapeHTML(error.message)}
                 </div>
-            `;
+                `;
 
             return;
         }
 
-        documentsList = data || [];
+        documentsList =
+            data || [];
+
         renderDocuments();
 
     } catch (error) {
+
         console.error(error);
 
-        grid.innerHTML = `
+        grid.innerHTML =
+            `
             <div class="empty">
                 Error al conectar con Supabase.
             </div>
-        `;
+            `;
+
     }
 }
 
 function renderDocuments() {
-    const grid = document.getElementById("documentGrid");
 
-    const search = document
-        .getElementById("searchInput")
-        .value
-        .trim()
-        .toLowerCase();
+    const grid =
+        document.getElementById(
+            "documentGrid"
+        );
 
-    let results = documentsList.slice();
+    const search =
+        document
+            .getElementById("searchInput")
+            .value
+            .trim()
+            .toLowerCase();
+
+    let results =
+        documentsList.slice();
 
     if (currentModule) {
-        results = results.filter(function (item) {
-            return item.module === currentModule;
-        });
+
+        results =
+            results.filter(
+                function (item) {
+
+                    return (
+                        item.module ===
+                        currentModule
+                    );
+
+                }
+            );
+
     }
 
     if (search) {
-        results = results.filter(function (item) {
-            const text = `
-                ${item.title || ""}
-                ${item.module || ""}
-                ${item.topic || ""}
-                ${item.type || ""}
-            `.toLowerCase();
 
-            return text.includes(search);
-        });
+        results =
+            results.filter(
+                function (item) {
+
+                    const text = `
+                        ${item.title || ""}
+                        ${item.module || ""}
+                        ${item.topic || ""}
+                        ${item.type || ""}
+                    `.toLowerCase();
+
+                    return text.includes(
+                        search
+                    );
+
+                }
+            );
+
     }
 
-    if (currentFilter === "favorite") {
-        results = results.filter(function (item) {
-            return item.favorite === true;
-        });
+    if (
+        currentFilter ===
+        "favorite"
+    ) {
+
+        results =
+            results.filter(
+                function (item) {
+
+                    return (
+                        item.favorite === true
+                    );
+
+                }
+            );
+
     }
 
-    if (currentFilter === "pending") {
-        results = results.filter(function (item) {
-            return item.completed !== true;
-        });
+    if (
+        currentFilter ===
+        "pending"
+    ) {
+
+        results =
+            results.filter(
+                function (item) {
+
+                    return (
+                        item.completed !== true
+                    );
+
+                }
+            );
+
     }
 
-    if (currentFilter === "completed") {
-        results = results.filter(function (item) {
-            return item.completed === true;
-        });
+    if (
+        currentFilter ===
+        "completed"
+    ) {
+
+        results =
+            results.filter(
+                function (item) {
+
+                    return (
+                        item.completed === true
+                    );
+
+                }
+            );
+
     }
 
-    if (results.length === 0) {
-        grid.innerHTML = `
+    if (
+        results.length === 0
+    ) {
+
+        grid.innerHTML =
+            `
             <div class="empty">
                 No hay documentos para mostrar.
             </div>
-        `;
+            `;
 
         return;
+
     }
 
     grid.innerHTML = "";
 
-    results.forEach(function (item) {
-        grid.appendChild(createDocumentCard(item));
-    });
+    results.forEach(
+        function (item) {
+
+            const card =
+                createDocumentCard(item);
+
+            grid.appendChild(card);
+
+        }
+    );
 }
 
 function createDocumentCard(item) {
-    const card = document.createElement("div");
 
-    card.className = "document-card";
+    const card =
+        document.createElement("div");
 
-    const favorite = item.favorite === true;
-    const completed = item.completed === true;
+    card.className =
+        "document-card";
+
+    const favorite =
+        item.favorite === true;
+
+    const completed =
+        item.completed === true;
 
     card.innerHTML = `
         <div class="document-top">
+
             <span class="document-type">
-                ${escapeHTML(item.type || "Archivo")}
+                ${escapeHTML(
+                    item.type ||
+                    "Archivo"
+                )}
             </span>
 
-            <button type="button" class="favorite-button">
+            <button
+                type="button"
+                class="favorite-button"
+            >
                 ${favorite ? "★" : "☆"}
             </button>
+
         </div>
 
         <div class="document-icon">
-            ${getFileIcon(item.path || item.url || "")}
+            ${getFileIcon(
+                item.path ||
+                item.url ||
+                ""
+            )}
         </div>
 
         <h3>
-            ${escapeHTML(item.title || "Sin título")}
+            ${escapeHTML(
+                item.title ||
+                "Sin título"
+            )}
         </h3>
 
         <p class="document-info">
-            ${escapeHTML(item.module || "")}
+
+            ${escapeHTML(
+                item.module ||
+                ""
+            )}
+
             <br>
-            ${escapeHTML(item.topic || "Sin tema")}
+
+            ${escapeHTML(
+                item.topic ||
+                "Sin tema"
+            )}
+
         </p>
 
         <div class="document-status">
-            ${completed ? "Completado" : "Pendiente"}
+            ${completed
+                ? "Completado"
+                : "Pendiente"
+            }
         </div>
 
         <div class="document-actions">
-            <button type="button" class="open-document">
+
+            <button
+                type="button"
+                class="open-document"
+            >
                 Abrir
             </button>
 
-            <button type="button" class="complete-document">
-                ${completed ? "Marcar pendiente" : "Completar"}
+            <button
+                type="button"
+                class="complete-document"
+            >
+                ${completed
+                    ? "Marcar pendiente"
+                    : "Completar"
+                }
             </button>
+
         </div>
 
-        <button type="button" class="delete-document">
+        <button
+            type="button"
+            class="delete-document"
+        >
             Eliminar
         </button>
     `;
 
-    card.querySelector(".favorite-button").addEventListener("click", function () {
-        toggleFavorite(item);
-    });
+    card
+        .querySelector(".favorite-button")
+        .addEventListener(
+            "click",
+            function () {
 
-    card.querySelector(".open-document").addEventListener("click", function () {
-        openDocument(item);
-    });
+                toggleFavorite(item);
 
-    card.querySelector(".complete-document").addEventListener("click", function () {
-        toggleCompleted(item);
-    });
+            }
+        );
 
-    card.querySelector(".delete-document").addEventListener("click", function () {
-        deleteDocument(item);
-    });
+    card
+        .querySelector(".open-document")
+        .addEventListener(
+            "click",
+            function () {
+
+                openDocument(item);
+
+            }
+        );
+
+    card
+        .querySelector(".complete-document")
+        .addEventListener(
+            "click",
+            function () {
+
+                toggleCompleted(item);
+
+            }
+        );
+
+    card
+        .querySelector(".delete-document")
+        .addEventListener(
+            "click",
+            function () {
+
+                deleteDocument(item);
+
+            }
+        );
 
     return card;
 }
 
 async function uploadDocument() {
-    const title = document.getElementById("title").value.trim();
-    const moduleName = document.getElementById("uploadModule").value;
-    const topic = document.getElementById("topic").value.trim();
-    const type = document.getElementById("type").value;
-    const fileInput = document.getElementById("file");
-    const file = fileInput.files[0];
-    const status = document.getElementById("uploadStatus");
-    const button = document.getElementById("uploadButton");
+
+    const title =
+        document
+            .getElementById("title")
+            .value
+            .trim();
+
+    const moduleName =
+        document
+            .getElementById("uploadModule")
+            .value;
+
+    const topic =
+        document
+            .getElementById("topic")
+            .value
+            .trim();
+
+    const type =
+        document
+            .getElementById("type")
+            .value;
+
+    const fileInput =
+        document.getElementById("file");
+
+    const file =
+        fileInput.files[0];
+
+    const status =
+        document.getElementById(
+            "uploadStatus"
+        );
+
+    const button =
+        document.getElementById(
+            "uploadButton"
+        );
 
     status.textContent = "";
 
     if (!title) {
-        status.textContent = "Escribe un título.";
+
+        status.textContent =
+            "Escribe un título.";
+
         return;
     }
 
     if (!moduleName) {
-        status.textContent = "Selecciona un módulo.";
+
+        status.textContent =
+            "Selecciona un módulo.";
+
         return;
     }
 
     if (!topic) {
-        status.textContent = "Escribe un tema.";
+
+        status.textContent =
+            "Escribe un tema.";
+
         return;
     }
 
     if (!file) {
-        status.textContent = "Selecciona un archivo.";
+
+        status.textContent =
+            "Selecciona un archivo.";
+
         return;
     }
 
     button.disabled = true;
-    button.textContent = "Subiendo...";
+
+    button.textContent =
+        "Subiendo...";
 
     try {
-        const moduleFolder = cleanPathPart(moduleName);
-        const topicFolder = cleanPathPart(topic);
-        const safeFileName = cleanFileName(file.name);
+
+        const moduleFolder =
+            cleanPathPart(
+                moduleName
+            );
+
+        const topicFolder =
+            cleanPathPart(
+                topic
+            );
+
+        const safeFileName =
+            cleanFileName(
+                file.name
+            );
 
         const uniqueName =
             Date.now() +
@@ -359,16 +762,24 @@ async function uploadDocument() {
             "/" +
             uniqueName;
 
-        const { error: uploadError } =
+        const {
+            error: uploadError
+        } =
             await supabaseClient
                 .storage
-                .from(STORAGE_BUCKET)
+                .from(
+                    STORAGE_BUCKET
+                )
                 .upload(
                     storagePath,
                     file,
                     {
-                        cacheControl: "3600",
-                        upsert: false,
+                        cacheControl:
+                            "3600",
+
+                        upsert:
+                            false,
+
                         contentType:
                             file.type ||
                             "application/octet-stream"
@@ -376,55 +787,106 @@ async function uploadDocument() {
                 );
 
         if (uploadError) {
+
             throw uploadError;
+
         }
 
-        const { data: urlData } =
+        const {
+            data: urlData
+        } =
             supabaseClient
                 .storage
-                .from(STORAGE_BUCKET)
-                .getPublicUrl(storagePath);
+                .from(
+                    STORAGE_BUCKET
+                )
+                .getPublicUrl(
+                    storagePath
+                );
 
-        const publicUrl = urlData.publicUrl;
+        const publicUrl =
+            urlData.publicUrl;
 
-        const { error: databaseError } =
+        const {
+            error: databaseError
+        } =
             await supabaseClient
                 .from("files")
                 .insert({
-                    name: file.name,
-                    title: title,
-                    module: moduleName,
-                    topic: topic,
-                    type: type,
-                    url: publicUrl,
-                    path: storagePath,
-                    favorite: false,
-                    completed: false
+
+                    name:
+                        file.name,
+
+                    title:
+                        title,
+
+                    module:
+                        moduleName,
+
+                    topic:
+                        topic,
+
+                    type:
+                        type,
+
+                    url:
+                        publicUrl,
+
+                    path:
+                        storagePath,
+
+                    favorite:
+                        false,
+
+                    completed:
+                        false
+
                 });
 
         if (databaseError) {
+
             await supabaseClient
                 .storage
-                .from(STORAGE_BUCKET)
-                .remove([storagePath]);
+                .from(
+                    STORAGE_BUCKET
+                )
+                .remove([
+                    storagePath
+                ]);
 
             throw databaseError;
+
         }
 
         status.textContent =
             "Archivo subido correctamente.";
 
-        document.getElementById("uploadForm").reset();
+        document
+            .getElementById(
+                "uploadForm"
+            )
+            .reset();
 
         await loadDocuments();
 
-        setTimeout(function () {
-            closeModal();
-            status.textContent = "";
-        }, 700);
+        setTimeout(
+            function () {
+
+                closeModal();
+
+                status.textContent =
+                    "";
+
+            },
+            700
+        );
 
     } catch (error) {
-        console.error("ERROR SUBIDA:", error);
+
+        console.error(
+            "ERROR SUBIDA:",
+            error
+        );
 
         status.textContent =
             "Error: " +
@@ -434,65 +896,111 @@ async function uploadDocument() {
             );
 
     } finally {
-        button.disabled = false;
-        button.textContent = "Subir a DAMFLIX";
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            "Subir a DAMFLIX";
+
     }
 }
 
 function openDocument(item) {
+
     if (!item.url) {
-        alert("No se encontró el archivo.");
+
+        alert(
+            "No se encontró el archivo."
+        );
+
         return;
     }
 
-    window.open(item.url, "_blank");
+    window.open(
+        item.url,
+        "_blank"
+    );
 }
 
 async function toggleFavorite(item) {
-    const newValue = item.favorite !== true;
 
-    const { error } =
+    const newValue =
+        item.favorite !== true;
+
+    const {
+        error
+    } =
         await supabaseClient
             .from("files")
             .update({
-                favorite: newValue
+
+                favorite:
+                    newValue
+
             })
-            .eq("id", item.id);
+            .eq(
+                "id",
+                item.id
+            );
 
     if (error) {
+
         console.error(error);
-        alert("No se pudo cambiar el favorito.");
+
+        alert(
+            "No se pudo cambiar el favorito."
+        );
+
         return;
     }
 
-    item.favorite = newValue;
+    item.favorite =
+        newValue;
 
     renderDocuments();
 }
 
 async function toggleCompleted(item) {
-    const newValue = item.completed !== true;
 
-    const { error } =
+    const newValue =
+        item.completed !== true;
+
+    const {
+        error
+    } =
         await supabaseClient
             .from("files")
             .update({
-                completed: newValue
+
+                completed:
+                    newValue
+
             })
-            .eq("id", item.id);
+            .eq(
+                "id",
+                item.id
+            );
 
     if (error) {
+
         console.error(error);
-        alert("No se pudo cambiar el estado.");
+
+        alert(
+            "No se pudo cambiar el estado."
+        );
+
         return;
     }
 
-    item.completed = newValue;
+    item.completed =
+        newValue;
 
     renderDocuments();
 }
 
 async function deleteDocument(item) {
+
     const confirmation =
         confirm(
             "¿Seguro que quieres eliminar \"" +
@@ -505,31 +1013,51 @@ async function deleteDocument(item) {
     }
 
     try {
+
         if (item.path) {
-            const { error: storageError } =
+
+            const {
+                error: storageError
+            } =
                 await supabaseClient
                     .storage
-                    .from(STORAGE_BUCKET)
-                    .remove([item.path]);
+                    .from(
+                        STORAGE_BUCKET
+                    )
+                    .remove([
+                        item.path
+                    ]);
 
             if (storageError) {
-                console.error(storageError);
+
+                console.error(
+                    storageError
+                );
+
             }
         }
 
-        const { error: databaseError } =
+        const {
+            error: databaseError
+        } =
             await supabaseClient
                 .from("files")
                 .delete()
-                .eq("id", item.id);
+                .eq(
+                    "id",
+                    item.id
+                );
 
         if (databaseError) {
+
             throw databaseError;
+
         }
 
         await loadDocuments();
 
     } catch (error) {
+
         console.error(error);
 
         alert(
@@ -539,71 +1067,134 @@ async function deleteDocument(item) {
 }
 
 function cleanPathPart(text) {
+
     let result =
         text
             .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-zA-Z0-9_-]/g, "_")
-            .replace(/_+/g, "_")
-            .replace(/^_+|_+$/g, "");
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
+            .replace(
+                /[^a-zA-Z0-9_-]/g,
+                "_"
+            )
+            .replace(
+                /_+/g,
+                "_"
+            )
+            .replace(
+                /^_+|_+$/g,
+                ""
+            );
 
     if (!result) {
-        result = "sin_nombre";
+
+        result =
+            "sin_nombre";
     }
 
     return result;
 }
 
 function cleanFileName(fileName) {
+
     const lastDot =
         fileName.lastIndexOf(".");
 
-    let name = fileName;
-    let extension = "";
+    let name =
+        fileName;
 
-    if (lastDot > 0) {
-        name = fileName.substring(0, lastDot);
-        extension = fileName.substring(lastDot + 1);
+    let extension =
+        "";
+
+    if (
+        lastDot > 0
+    ) {
+
+        name =
+            fileName.substring(
+                0,
+                lastDot
+            );
+
+        extension =
+            fileName.substring(
+                lastDot + 1
+            );
     }
 
     name =
         name
             .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-zA-Z0-9_-]/g, "_")
-            .replace(/_+/g, "_")
-            .replace(/^_+|_+$/g, "");
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
+            .replace(
+                /[^a-zA-Z0-9_-]/g,
+                "_"
+            )
+            .replace(
+                /_+/g,
+                "_"
+            )
+            .replace(
+                /^_+|_+$/g,
+                ""
+            );
 
     extension =
         extension
-            .replace(/[^a-zA-Z0-9]/g, "")
+            .replace(
+                /[^a-zA-Z0-9]/g,
+                ""
+            )
             .toLowerCase();
 
     if (!name) {
-        name = "archivo";
+
+        name =
+            "archivo";
     }
 
     if (extension) {
-        return name + "." + extension;
+
+        return (
+            name +
+            "." +
+            extension
+        );
     }
 
     return name;
 }
 
 function getFileIcon(path) {
-    const cleanPath = path.split("?")[0];
-    const parts = cleanPath.split(".");
 
-    let extension = "";
+    const cleanPath =
+        path.split("?")[0];
 
-    if (parts.length > 1) {
+    const parts =
+        cleanPath.split(".");
+
+    let extension =
+        "";
+
+    if (
+        parts.length > 1
+    ) {
+
         extension =
             parts
                 .pop()
                 .toLowerCase();
     }
 
-    if (extension === "pdf") {
+    if (
+        extension === "pdf"
+    ) {
+
         return "📕";
     }
 
@@ -611,6 +1202,7 @@ function getFileIcon(path) {
         extension === "doc" ||
         extension === "docx"
     ) {
+
         return "📘";
     }
 
@@ -619,6 +1211,7 @@ function getFileIcon(path) {
         extension === "xlsx" ||
         extension === "csv"
     ) {
+
         return "📗";
     }
 
@@ -626,6 +1219,7 @@ function getFileIcon(path) {
         extension === "ppt" ||
         extension === "pptx"
     ) {
+
         return "📙";
     }
 
@@ -637,6 +1231,7 @@ function getFileIcon(path) {
         extension === "webp" ||
         extension === "svg"
     ) {
+
         return "🖼️";
     }
 
@@ -645,6 +1240,7 @@ function getFileIcon(path) {
         extension === "rar" ||
         extension === "7z"
     ) {
+
         return "🗜️";
     }
 
@@ -661,6 +1257,7 @@ function getFileIcon(path) {
         extension === "xml" ||
         extension === "json"
     ) {
+
         return "💻";
     }
 
@@ -669,6 +1266,7 @@ function getFileIcon(path) {
         extension === "wav" ||
         extension === "ogg"
     ) {
+
         return "🎵";
     }
 
@@ -678,6 +1276,7 @@ function getFileIcon(path) {
         extension === "avi" ||
         extension === "mkv"
     ) {
+
         return "🎬";
     }
 
@@ -685,6 +1284,7 @@ function getFileIcon(path) {
         extension === "txt" ||
         extension === "md"
     ) {
+
         return "📄";
     }
 
@@ -692,6 +1292,7 @@ function getFileIcon(path) {
 }
 
 function escapeHTML(text) {
+
     const element =
         document.createElement("div");
 
