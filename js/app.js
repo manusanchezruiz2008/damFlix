@@ -6,7 +6,7 @@ const SUPABASE_URL =
     "https://sriifbloyfivdyfisixn.supabase.co";
 
 const SUPABASE_KEY =
-    "PEGA_AQUI_TU_CLAVE_ACTUAL";
+    "sb_publishable_l26P02t68OP-dPzfgQcxeg_9xrc7aJT";
 
 const STORAGE_BUCKET =
     "files";
