@@ -1,116 +1,63 @@
-// ========================================
-// DAMFLIX
-// Biblioteca de 1º DAM
-// ========================================
-
-
-// ========================================
-// MÓDULOS
-// ========================================
-
 const modules = [
-
   ["💻", "Programación"],
-
   ["🗄️", "Bases de Datos"],
-
   ["🛠️", "Entornos de Desarrollo"],
-
   ["🖥️", "Sistemas Informáticos"],
-
   ["🌐", "Lenguajes de Marcas"],
-
   ["📱", "Digitalización"],
-
   ["💼", "IPE I"],
-
   ["♻️", "Sostenibilidad"]
-
 ];
-
-
-// ========================================
-// DOCUMENTO DE DEMOSTRACIÓN
-// ========================================
 
 const sampleDocs = [
-
   {
     id: "demo-1",
-
     title: "Bienvenido a DAMFLIX",
-
     module: "Programación",
-
     topic: "Tema 1",
-
     type: "Apuntes",
-
     url: "",
-
     path: "",
-
     favorite: true,
-
     status: "Pendiente",
-
     demo: true
-
   }
-
 ];
-
-
-// ========================================
-// DOCUMENTOS GUARDADOS
-// ========================================
 
 let docs =
   JSON.parse(
     localStorage.getItem("damflix_docs") || "null"
   ) || sampleDocs;
 
-
 let activeModule = "Todos";
-
 let activeFilter = "Todos";
 
-
-// ========================================
-// ELEMENTOS HTML
-// ========================================
 
 const moduleRow =
   document.getElementById("moduleRow");
 
-
 const documentGrid =
   document.getElementById("documentGrid");
-
 
 const searchInput =
   document.getElementById("searchInput");
 
-
 const moduleSelect =
   document.getElementById("module");
 
-
 const modal =
   document.getElementById("uploadModal");
-
 
 const uploadStatus =
   document.getElementById("uploadStatus");
 
 
-// ========================================
-// CONFIGURACIÓN SUPABASE
-// ========================================
+/* =====================================
+   SUPABASE
+===================================== */
 
 const CONFIG =
   window.DAMFLIX_CONFIG || {};
-
 
 const configured =
   CONFIG.supabaseUrl &&
@@ -118,7 +65,6 @@ const configured =
   CONFIG.bucket &&
   !CONFIG.supabaseUrl.includes("PEGA_AQUI") &&
   !CONFIG.supabaseAnonKey.includes("PEGA_AQUI");
-
 
 const supabaseClient =
   configured && window.supabase
@@ -129,36 +75,22 @@ const supabaseClient =
     : null;
 
 
-// ========================================
-// CREAR MÓDULOS
-// ========================================
+/* =====================================
+   MÓDULOS
+===================================== */
 
 modules.forEach(([icon, name]) => {
 
   const card =
     document.createElement("div");
 
-
-  card.className =
-    "module-card";
-
+  card.className = "module-card";
 
   card.innerHTML = `
-
-    <div class="icon">
-      ${icon}
-    </div>
-
-    <h3>
-      ${name}
-    </h3>
-
-    <p>
-      Ver documentos
-    </p>
-
+    <div class="icon">${icon}</div>
+    <h3>${name}</h3>
+    <p>Ver documentos</p>
   `;
-
 
   card.onclick = () => {
 
@@ -174,27 +106,24 @@ modules.forEach(([icon, name]) => {
 
   };
 
-
   moduleRow.appendChild(card);
 
 
   const option =
     document.createElement("option");
 
-
   option.value = name;
 
   option.textContent = name;
-
 
   moduleSelect.appendChild(option);
 
 });
 
 
-// ========================================
-// GUARDAR DATOS
-// ========================================
+/* =====================================
+   GUARDAR DOCUMENTOS
+===================================== */
 
 function saveDocs() {
 
@@ -206,28 +135,22 @@ function saveDocs() {
 }
 
 
-// ========================================
-// PROTEGER HTML
-// ========================================
+/* =====================================
+   SEGURIDAD
+===================================== */
 
 function escapeHtml(text) {
 
   return String(text).replace(
     /[&<>"']/g,
-    function (character) {
+    function(character) {
 
       return {
-
         "&": "&amp;",
-
         "<": "&lt;",
-
         ">": "&gt;",
-
         '"': "&quot;",
-
         "'": "&#039;"
-
       }[character];
 
     }
@@ -236,9 +159,9 @@ function escapeHtml(text) {
 }
 
 
-// ========================================
-// MOSTRAR DOCUMENTOS
-// ========================================
+/* =====================================
+   MOSTRAR DOCUMENTOS
+===================================== */
 
 function renderDocs() {
 
@@ -251,21 +174,14 @@ function renderDocs() {
   const filtered =
     docs.filter(doc => {
 
-
-      const text =
-        [
-
-          doc.title,
-
-          doc.module,
-
-          doc.topic,
-
-          doc.type
-
-        ]
-          .join(" ")
-          .toLowerCase();
+      const text = [
+        doc.title,
+        doc.module,
+        doc.topic,
+        doc.type
+      ]
+        .join(" ")
+        .toLowerCase();
 
 
       const matchesSearch =
@@ -311,13 +227,9 @@ function renderDocs() {
 
 
       return (
-
         matchesSearch &&
-
         matchesModule &&
-
         matchesFilter
-
       );
 
     });
@@ -336,13 +248,10 @@ function renderDocs() {
 
   filtered.forEach(doc => {
 
-
     const card =
       document.createElement("article");
 
-
-    card.className =
-      "doc-card";
+    card.className = "doc-card";
 
 
     card.innerHTML = `
@@ -353,7 +262,6 @@ function renderDocs() {
 
         <button
           class="favorite ${doc.favorite ? "on" : ""}"
-          title="Favorito"
           type="button"
         >
           ★
@@ -361,33 +269,21 @@ function renderDocs() {
 
       </div>
 
-
       <div class="doc-body">
 
-
         <span class="badge">
-
           ${escapeHtml(
             doc.status || "Pendiente"
           )}
-
         </span>
 
-
         <h3>
-
-          ${escapeHtml(
-            doc.title
-          )}
-
+          ${escapeHtml(doc.title)}
         </h3>
-
 
         <div class="meta">
 
-          ${escapeHtml(
-            doc.module
-          )}
+          ${escapeHtml(doc.module)}
 
           ·
 
@@ -397,39 +293,29 @@ function renderDocs() {
 
           ·
 
-          ${escapeHtml(
-            doc.type
-          )}
+          ${escapeHtml(doc.type)}
 
         </div>
 
-
         <div class="doc-actions">
-
 
           <button
             class="open-btn"
             type="button"
           >
-
             ${doc.demo ? "Demo" : "Abrir"}
-
           </button>
-
 
           <button
             class="progress-btn"
             type="button"
           >
-
             ${
               doc.status === "Completado"
                 ? "↩"
                 : "✓"
             }
-
           </button>
-
 
           ${
             doc.demo
@@ -444,17 +330,13 @@ function renderDocs() {
               `
           }
 
-
         </div>
 
       </div>
-
     `;
 
 
-    // ====================================
-    // FAVORITO
-    // ====================================
+    /* FAVORITO */
 
     card
       .querySelector(".favorite")
@@ -470,9 +352,7 @@ function renderDocs() {
       };
 
 
-    // ====================================
-    // COMPLETADO
-    // ====================================
+    /* COMPLETADO */
 
     card
       .querySelector(".progress-btn")
@@ -483,7 +363,6 @@ function renderDocs() {
             ? "Pendiente"
             : "Completado";
 
-
         saveDocs();
 
         renderDocs();
@@ -491,9 +370,7 @@ function renderDocs() {
       };
 
 
-    // ====================================
-    // ABRIR PDF
-    // ====================================
+    /* ABRIR */
 
     card
       .querySelector(".open-btn")
@@ -509,7 +386,6 @@ function renderDocs() {
 
         }
 
-
         if (doc.url) {
 
           window.open(
@@ -523,9 +399,7 @@ function renderDocs() {
       };
 
 
-    // ====================================
-    // ELIMINAR PDF
-    // ====================================
+    /* ELIMINAR */
 
     const deleteBtn =
       card.querySelector(
@@ -538,55 +412,34 @@ function renderDocs() {
       deleteBtn.onclick =
         async () => {
 
-
-          const confirmDelete =
-            confirm(
+          if (
+            !confirm(
               `¿Eliminar "${doc.title}" de DAMFLIX?`
-            );
-
-
-          if (!confirmDelete) {
-
+            )
+          ) {
             return;
-
           }
 
 
           try {
-
 
             if (
               doc.path &&
               supabaseClient
             ) {
 
-
-              const result =
-                await supabaseClient
-                  .storage
-                  .from(CONFIG.bucket)
-                  .remove([
-                    doc.path
-                  ]);
-
-
-              if (result.error) {
-
-                console.error(
-                  result.error
-                );
-
-              }
+              await supabaseClient
+                .storage
+                .from(CONFIG.bucket)
+                .remove([
+                  doc.path
+                ]);
 
             }
 
-
           } catch (error) {
 
-            console.error(
-              "Error eliminando PDF:",
-              error
-            );
+            console.error(error);
 
           }
 
@@ -614,17 +467,15 @@ function renderDocs() {
 }
 
 
-// ========================================
-// FILTROS
-// ========================================
+/* =====================================
+   FILTROS
+===================================== */
 
 document
   .querySelectorAll(".filter")
   .forEach(button => {
 
-
     button.onclick = () => {
-
 
       document
         .querySelectorAll(".filter")
@@ -653,9 +504,9 @@ document
   });
 
 
-// ========================================
-// BUSCADOR
-// ========================================
+/* =====================================
+   BUSCADOR
+===================================== */
 
 searchInput.addEventListener(
   "input",
@@ -663,16 +514,15 @@ searchInput.addEventListener(
 );
 
 
-// ========================================
-// MODAL
-// ========================================
+/* =====================================
+   MODAL
+===================================== */
 
 function openModal() {
 
   modal.classList.remove(
     "hidden"
   );
-
 
   modal.setAttribute(
     "aria-hidden",
@@ -688,21 +538,15 @@ function closeModal() {
     "hidden"
   );
 
-
   modal.setAttribute(
     "aria-hidden",
     "true"
   );
 
-
   uploadStatus.textContent = "";
 
 }
 
-
-// ========================================
-// BOTONES DEL MODAL
-// ========================================
 
 document
   .getElementById("openUpload")
@@ -735,9 +579,9 @@ modal.addEventListener(
 );
 
 
-// ========================================
-// SUBIR PDF
-// ========================================
+/* =====================================
+   SUBIR PDF
+===================================== */
 
 document
   .getElementById("uploadForm")
@@ -745,31 +589,18 @@ document
     "submit",
     async event => {
 
-
       event.preventDefault();
 
-
-      // ------------------------------------
-      // COMPROBAR SUPABASE
-      // ------------------------------------
 
       if (!supabaseClient) {
 
         uploadStatus.textContent =
-          "Error: Supabase no está configurado correctamente.";
-
-        console.error(
-          "No existe supabaseClient."
-        );
+          "Supabase no está configurado correctamente.";
 
         return;
 
       }
 
-
-      // ------------------------------------
-      // DATOS DEL FORMULARIO
-      // ------------------------------------
 
       const file =
         document
@@ -803,10 +634,6 @@ document
           .value;
 
 
-      // ------------------------------------
-      // COMPROBAR ARCHIVO
-      // ------------------------------------
-
       if (!file) {
 
         uploadStatus.textContent =
@@ -817,25 +644,6 @@ document
       }
 
 
-      if (
-        file.type !== "application/pdf" &&
-        !file.name
-          .toLowerCase()
-          .endsWith(".pdf")
-      ) {
-
-        uploadStatus.textContent =
-          "Solo puedes subir archivos PDF.";
-
-        return;
-
-      }
-
-
-      // ------------------------------------
-      // MOSTRAR ESTADO
-      // ------------------------------------
-
       uploadStatus.textContent =
         "Subiendo PDF...";
 
@@ -843,9 +651,7 @@ document
       try {
 
 
-        // ----------------------------------
-        // LIMPIAR NOMBRES
-        // ----------------------------------
+        /* LIMPIAR NOMBRES */
 
         const moduleFolder =
           module
@@ -886,34 +692,22 @@ document
             );
 
 
-        // ----------------------------------
-        // NOMBRE ÚNICO
-        // ----------------------------------
-
-        const fileName =
-          `${Date.now()}_${safeName}`;
-
-
-        // ----------------------------------
-        // RUTA
-        // ----------------------------------
+        /* RUTA FINAL */
 
         const path =
-          `${moduleFolder}/${topicFolder}/${fileName}`;
+          `${moduleFolder}/${topicFolder}/${Date.now()}_${safeName}`;
 
 
         console.log(
-          "Ruta del PDF:",
+          "Subiendo:",
           path
         );
 
 
-        // ----------------------------------
-        // SUBIR A SUPABASE
-        // ----------------------------------
+        /* SUBIR */
 
         const {
-          error: uploadError
+          error
         } =
           await supabaseClient
             .storage
@@ -922,31 +716,25 @@ document
               path,
               file,
               {
-
                 cacheControl: "3600",
-
                 upsert: false,
-
                 contentType:
                   "application/pdf"
-
               }
             );
 
 
-        if (uploadError) {
+        if (error) {
 
-          throw uploadError;
+          throw error;
 
         }
 
 
-        // ----------------------------------
-        // URL PÚBLICA
-        // ----------------------------------
+        /* URL */
 
         const {
-          data: publicData
+          data
         } =
           supabaseClient
             .storage
@@ -954,11 +742,9 @@ document
             .getPublicUrl(path);
 
 
-        // ----------------------------------
-        // CREAR DOCUMENTO
-        // ----------------------------------
+        /* GUARDAR DOCUMENTO */
 
-        const newDocument = {
+        docs.unshift({
 
           id:
             crypto.randomUUID
@@ -966,41 +752,42 @@ document
               : String(Date.now()),
 
           title:
-
             title ||
-            file.name
-              .replace(
-                /\.pdf$/i,
-                ""
-              ),
+            file.name,
 
-          module,
+          module:
 
-          topic,
+            module,
 
-          type,
+          topic:
+
+            topic,
+
+          type:
+
+            type,
 
           url:
-            publicData.publicUrl,
 
-          path,
+            data.publicUrl,
 
-          favorite: false,
+          path:
 
-          status: "Pendiente",
+            path,
 
-          demo: false
+          favorite:
 
-        };
+            false,
 
+          status:
 
-        // ----------------------------------
-        // GUARDAR
-        // ----------------------------------
+            "Pendiente",
 
-        docs.unshift(
-          newDocument
-        );
+          demo:
+
+            false
+
+        });
 
 
         saveDocs();
@@ -1008,20 +795,12 @@ document
         renderDocs();
 
 
-        // ----------------------------------
-        // LIMPIAR FORMULARIO
-        // ----------------------------------
-
         event.target.reset();
 
 
         uploadStatus.textContent =
           "PDF subido correctamente.";
 
-
-        // ----------------------------------
-        // CERRAR MODAL
-        // ----------------------------------
 
         setTimeout(
           closeModal,
@@ -1031,9 +810,8 @@ document
 
       } catch (error) {
 
-
         console.error(
-          "ERROR SUBIENDO PDF:",
+          "ERROR:",
           error
         );
 
@@ -1051,12 +829,12 @@ document
   );
 
 
-// ========================================
-// INICIAR
-// ========================================
+/* =====================================
+   INICIAR
+===================================== */
 
 renderDocs();
 
 console.log(
-  "DAMFLIX cargado correctamente."
+  "DAMFLIX cargado correctamente"
 );
