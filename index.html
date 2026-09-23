@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DAMFLIX | Tu biblioteca de DAM</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="img/damflix.png" type="image/png">
+
+
+    <!-- SUPABASE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- NUESTRA APP -->
+    <script src="js/app.js" defer></script>
+</head>
+
+<body>
+
+    <!-- PANTALLA DE AUTENTICACIÓN -->
+    <div id="authScreen" class="auth-screen">
+
+        <div class="auth-box">
+
+            <a href="#" class="logo">DAMFLIX</a>
+
+            <p class="auth-subtitle">Tu biblioteca privada de apuntes</p>
+
+            <!-- LOGIN -->
+            <form id="loginForm" class="auth-form">
+
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" required autocomplete="email">
+
+                <label for="loginPassword">Contraseña</label>
+                <input type="password" id="loginPassword" required autocomplete="current-password">
+
+                <div id="loginStatus" class="auth-status"></div>
+
+                <button type="submit" class="auth-button">Entrar</button>
+
+                <div class="auth-links">
+                    <a href="#" id="showForgot">¿Has olvidado tu contraseña?</a>
+                    <a href="#" id="showRegister">Crear cuenta</a>
+                </div>
+
+            </form>
+
+            <!-- REGISTRO -->
+            <form id="registerForm" class="auth-form hidden">
+
+                <label for="registerName">Nombre</label>
+                <input type="text" id="registerName" required autocomplete="name">
+
+                <label for="registerEmail">Email</label>
+                <input type="email" id="registerEmail" required autocomplete="email">
+
+                <label for="registerPassword">Contraseña</label>
+                <input type="password" id="registerPassword" required minlength="6" autocomplete="new-password">
+
+                <div id="registerStatus" class="auth-status"></div>
+
+                <button type="submit" class="auth-button">Crear cuenta</button>
+
+                <div class="auth-links">
+                    <a href="#" id="showLoginFromRegister">Ya tengo cuenta</a>
+                </div>
+
+            </form>
+
+            <!-- RECUPERAR CONTRASEÑA -->
+            <form id="forgotForm" class="auth-form hidden">
+
+                <p class="auth-help">Te enviaremos un enlace para restablecer tu contraseña.</p>
+
+                <label for="forgotEmail">Email</label>
+                <input type="email" id="forgotEmail" required autocomplete="email">
+
+                <div id="forgotStatus" class="auth-status"></div>
+
+                <button type="submit" class="auth-button">Enviar enlace</button>
+
+                <div class="auth-links">
+                    <a href="#" id="showLoginFromForgot">Volver a entrar</a>
+                </div>
+
+            </form>
+
+            <!-- NUEVA CONTRASEÑA (tras pulsar el enlace del email) -->
+            <form id="updatePasswordForm" class="auth-form hidden">
+
+                <p class="auth-help">Escribe tu nueva contraseña.</p>
+
+                <label for="newPassword">Nueva contraseña</label>
+                <input type="password" id="newPassword" required minlength="6" autocomplete="new-password">
+
+                <div id="updatePasswordStatus" class="auth-status"></div>
+
+                <button type="submit" class="auth-button">Guardar contraseña</button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- APP (oculta hasta iniciar sesión) -->
+    <div id="app" class="hidden">
+
+    <!-- CABECERA -->
+    <header>
+
+        <a href="#" class="logo">
+            DAMFLIX
+        </a>
+
+        <nav>
+            <a href="#modulos">Módulos</a>
+            <a href="#biblioteca">Biblioteca</a>
+
+            <button id="openUpload">
+                + Subir archivo
+            </button>
+
+            <div class="user-menu">
+
+                <button id="userMenuButton" class="user-menu-button">
+                    <span id="userInitial">?</span>
+                </button>
+
+                <div id="userMenuDropdown" class="user-menu-dropdown">
+
+                    <div class="user-menu-name" id="userMenuName"></div>
+                    <div class="user-menu-email" id="userMenuEmail"></div>
+
+                    <label class="user-menu-label" for="userMenuDisplayName">Nombre visible</label>
+                    <input type="text" id="userMenuDisplayName" class="user-menu-input">
+                    <button type="button" id="saveDisplayName" class="user-menu-save">Guardar nombre</button>
+
+                    <button type="button" id="logoutButton" class="user-menu-logout">Cerrar sesión</button>
+
+                </div>
+
+            </div>
+
+        </nav>
+
+    </header>
+
+
+    <!-- PESTAÑAS: MI CONTENIDO / COMPARTIDO CONMIGO -->
+    <div class="scope-tabs">
+
+        <button class="scope-tab active" data-scope="mine">
+            Mi contenido
+        </button>
+
+        <button class="scope-tab" data-scope="shared">
+            Compartido conmigo
+        </button>
+
+    </div>
+
+
+    <main>
+
+        <!-- MÓDULOS -->
+        <section id="modulos">
+
+            <div class="section-header">
+
+                <h1>Módulos</h1>
+
+                <select id="moduleFilter">
+                    <option value="">Todas las asignaturas</option>
+                </select>
+
+            </div>
+
+            <div id="moduleRow" class="module-row"></div>
+
+        </section>
+
+
+        <!-- BIBLIOTECA -->
+        <section id="biblioteca">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Mi biblioteca</h2>
+
+                    <p id="librarySubtitle">
+                        Todos tus documentos
+                    </p>
+                </div>
+
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Buscar apuntes, tema, módulo..."
+                >
+
+            </div>
+
+
+            <!-- FILTROS -->
+            <div class="filters">
+
+                <button
+                    class="filter active"
+                    data-filter="all"
+                >
+                    Todos
+                </button>
+
+                <button
+                    class="filter"
+                    data-filter="favorite"
+                >
+                    ★ Favoritos
+                </button>
+
+                <button
+                    class="filter"
+                    data-filter="pending"
+                >
+                    Pendientes
+                </button>
+
+                <button
+                    class="filter"
+                    data-filter="completed"
+                >
+                    Completados
+                </button>
+
+            </div>
+
+
+            <!-- DOCUMENTOS -->
+            <div
+                id="documentGrid"
+                class="document-grid"
+            ></div>
+
+        </section>
+
+    </main>
+
+
+    <!-- MODAL COMPARTIR -->
+    <div id="shareModal" class="modal">
+
+        <div class="modal-content">
+
+            <button type="button" id="closeShare" class="close">×</button>
+
+            <h2>Compartir</h2>
+
+            <p class="modal-description" id="shareTargetLabel">
+                Elige con quién quieres compartir este contenido.
+            </p>
+
+            <div id="shareScopeChoice" class="share-scope-choice"></div>
+
+            <form id="shareForm">
+
+                <label for="shareEmail">Email del usuario</label>
+
+                <input
+                    type="email"
+                    id="shareEmail"
+                    placeholder="compañero@ejemplo.com"
+                    required
+                >
+
+                <label for="sharePermission">Permiso</label>
+
+                <select id="sharePermission">
+                    <option value="lector">Lector (ver y descargar)</option>
+                    <option value="editor">Editor (ver, descargar, subir y modificar)</option>
+                </select>
+
+                <div id="shareStatus" class="auth-status"></div>
+
+                <button type="submit" class="upload-button">
+                    Compartir
+                </button>
+
+            </form>
+
+            <div id="shareList" class="share-list"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MODAL SUBIR ARCHIVO -->
+    <div id="uploadModal" class="modal">
+
+        <div class="modal-content">
+
+            <button
+                type="button"
+                id="closeUpload"
+                class="close"
+            >
+                ×
+            </button>
+
+
+            <h2>Subir documento</h2>
+
+            <p class="modal-description">
+                Organiza tu archivo por módulo y tema.
+            </p>
+
+
+            <form id="uploadForm">
+
+                <label for="uploadModule">
+                    Módulo
+                </label>
+
+                <select
+                    id="uploadModule"
+                    required
+                >
+                    <option value="">
+                        Selecciona un módulo
+                    </option>
+                </select>
+
+
+                <label for="topic">
+                    Tema
+                </label>
+
+                <input
+                    type="text"
+                    id="topic"
+                    placeholder="Ej: Tema 1"
+                    required
+                >
+
+
+                <label for="type">
+                    Tipo
+                </label>
+
+                <select id="type" required>
+
+                    <option value="Apuntes">
+                        Apuntes
+                    </option>
+
+                    <option value="Ejercicios">
+                        Ejercicios
+                    </option>
+
+                    <option value="Práctica">
+                        Práctica
+                    </option>
+
+                    <option value="Examen">
+                        Examen
+                    </option>
+
+                    <option value="Trabajo">
+                        Trabajo
+                    </option>
+
+                    <option value="Proyecto">
+                        Proyecto
+                    </option>
+
+                    <option value="Otro">
+                        Otro
+                    </option>
+
+                </select>
+
+
+                <label>
+                    Archivos
+                </label>
+
+                <!-- ZONA DE ARRASTRAR Y SOLTAR -->
+                <div id="dropZone" class="drop-zone">
+
+                    <div class="drop-zone-icon">⬆️</div>
+
+                    <p>
+                        Arrastra tus archivos aquí
+                        <br>
+                        o haz clic para elegirlos
+                    </p>
+
+                    <p class="drop-zone-help">
+                        Puedes soltar varios a la vez. El título
+                        de cada uno se toma del nombre del archivo
+                        (lo puedes editar abajo).
+                    </p>
+
+                    <!-- SIN ACCEPT = CUALQUIER ARCHIVO -->
+                    <input
+                        type="file"
+                        id="file"
+                        multiple
+                        hidden
+                    >
+
+                </div>
+
+                <div id="fileList" class="file-list"></div>
+
+
+                <div id="uploadStatus"></div>
+
+
+                <button
+                    type="submit"
+                    id="uploadButton"
+                    class="upload-button"
+                >
+                    Subir a DAMFLIX
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- VISOR DE ARCHIVOS (HTML, PDF, IMÁGENES) -->
+    <div id="htmlViewer" class="html-viewer">
+
+        <div class="html-viewer-bar">
+
+            <span id="htmlViewerTitle" class="html-viewer-title"></span>
+
+            <div class="html-viewer-actions">
+
+                <button type="button" id="htmlViewerNewTab">
+                    Abrir en pestaña nueva
+                </button>
+
+                <button type="button" id="closeHtmlViewer">
+                    ✕ Cerrar
+                </button>
+
+            </div>
+
+        </div>
+
+        <div id="htmlViewerBody" class="html-viewer-body">
+
+            <!-- sandbox sin allow-same-origin: el HTML subido queda aislado de tu web -->
+            <iframe
+                id="htmlViewerFrame"
+                class="html-viewer-frame"
+            ></iframe>
+
+            <img id="htmlViewerImage" class="html-viewer-image">
+
+        </div>
+
+    </div>
+
+
+    <footer>
+        DAMFLIX · Tu biblioteca de 1º DAM
+    </footer>
+
+    </div> <!-- /#app -->
+
+</body>
+
+</html>
