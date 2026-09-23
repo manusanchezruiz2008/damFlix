@@ -1148,9 +1148,7 @@ footer {
     display: flex;
     gap: 10px;
 
-    width: 90%;
-    max-width: 1450px;
-    margin: 30px auto 0;
+    margin: 0 0 30px;
 }
 
 .scope-tab {
@@ -1301,4 +1299,664 @@ footer {
 .share-row-remove:hover {
     color: white;
     border-color: #e50914;
+}
+
+
+/* =========================
+   APP SHELL (sidebar + contenido)
+========================= */
+
+.app-shell {
+    display: flex;
+
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 240px;
+    flex-shrink: 0;
+
+    background: #0c0c0c;
+    border-right: 1px solid #202020;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 20px 14px;
+
+    position: sticky;
+    top: 0;
+    height: 100vh;
+
+    z-index: 600;
+}
+
+.sidebar-logo {
+    padding: 10px 10px 25px 10px;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    border: none;
+    background: transparent;
+
+    color: #aaaaaa;
+
+    font-size: 15px;
+    font-family: inherit;
+
+    text-align: left;
+
+    padding: 12px 14px;
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    transition: 0.15s;
+}
+
+.sidebar-icon {
+    font-size: 18px;
+}
+
+.sidebar-link:hover {
+    background: #1a1a1a;
+    color: white;
+}
+
+.sidebar-link.active {
+    background: #e50914;
+    color: white;
+}
+
+.app-main {
+    flex: 1;
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-toggle {
+    display: none;
+
+    border: none;
+    background: transparent;
+    color: white;
+
+    font-size: 22px;
+
+    cursor: pointer;
+}
+
+.header-spacer {
+    flex: 1;
+}
+
+#openUpload {
+    border: none;
+
+    padding: 12px 18px;
+    border-radius: 6px;
+
+    background: #e50914;
+    color: white;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    margin-right: 20px;
+}
+
+#openUpload:hover {
+    background: #b20710;
+}
+
+
+/* =========================
+   VISTAS (dashboard, horario, calendario, tareas, favoritos, perfil)
+========================= */
+
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
+
+.placeholder-view {
+    border: 1px dashed #2a2a2a;
+    border-radius: 12px;
+
+    padding: 40px 25px;
+
+    color: #aaaaaa;
+
+    text-align: center;
+}
+
+
+/* =========================
+   RESPONSIVE: SIDEBAR
+========================= */
+
+@media (max-width: 900px) {
+
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+
+        transform: translateX(-100%);
+
+        transition: transform 0.2s ease;
+
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sidebar-toggle {
+        display: block;
+    }
+
+}
+
+
+/* =========================
+   FORMULARIO GENÉRICO DE MODAL (horario, etc.)
+========================= */
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-form label {
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+.modal-form input,
+.modal-form select {
+    width: 100%;
+}
+
+
+/* =========================
+   HORARIO
+========================= */
+
+.schedule-add-button {
+    margin-top: 0;
+    width: auto;
+    padding: 12px 18px;
+}
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.schedule-day {
+    background: #111111;
+    border: 1px solid #202020;
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.schedule-day-title {
+    color: #e50914;
+    font-weight: bold;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+.class-card {
+    background: #171717;
+    border: 1px solid #262626;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.class-card:hover {
+    border-color: #e50914;
+}
+
+.class-card-time {
+    color: #aaaaaa;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.class-card-subject {
+    font-weight: bold;
+}
+
+.class-card-teacher {
+    color: #999999;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.class-card-notes {
+    color: #e50914;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.schedule-day-empty {
+    color: #555555;
+    font-size: 13px;
+}
+
+.schedule-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.schedule-form-actions .upload-button {
+    margin-top: 0;
+    flex: 1;
+}
+
+.schedule-delete-button {
+    border: 1px solid #333333;
+    border-radius: 6px;
+    background: transparent;
+    color: #aaaaaa;
+    padding: 13px 16px;
+    cursor: pointer;
+}
+
+.schedule-delete-button:hover {
+    color: white;
+    border-color: #e50914;
+}
+
+
+@media (max-width: 900px) {
+
+    .schedule-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* =========================
+   DASHBOARD
+========================= */
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: #111111;
+    border: 1px solid #202020;
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.stat-card-value {
+    font-size: 26px;
+    font-weight: bold;
+    color: #e50914;
+}
+
+.stat-card-label {
+    color: #999999;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.dashboard-card {
+    background: #111111;
+    border: 1px solid #202020;
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.dashboard-card h3 {
+    margin-bottom: 12px;
+    font-size: 15px;
+}
+
+.dashboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dashboard-row {
+    background: #171717;
+    border: 1px solid #262626;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.dashboard-row:hover {
+    border-color: #e50914;
+}
+
+.dashboard-row-title {
+    font-weight: bold;
+}
+
+.dashboard-row-meta {
+    color: #999999;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.dashboard-empty {
+    color: #555555;
+    font-size: 13px;
+}
+
+
+/* =========================
+   TAREAS
+========================= */
+
+.task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.task-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    background: #111111;
+    border: 1px solid #202020;
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.task-row.completed {
+    opacity: 0.5;
+}
+
+.task-row-checkbox {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.task-row-body {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.task-row-title {
+    font-weight: bold;
+}
+
+.task-row-title.completed-text {
+    text-decoration: line-through;
+}
+
+.task-row-meta {
+    color: #999999;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.priority-badge {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.priority-baja {
+    background: #1f3d2b;
+    color: #6fd38a;
+}
+
+.priority-media {
+    background: #3d3a1f;
+    color: #e0cf5c;
+}
+
+.priority-alta {
+    background: #3d1f1f;
+    color: #ff6b6b;
+}
+
+.task-completed-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.task-completed-label input {
+    width: auto;
+}
+
+
+/* =========================
+   CALENDARIO
+========================= */
+
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 16px;
+}
+
+.calendar-nav-button {
+    border: 1px solid #333333;
+    background: #111111;
+    color: white;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.calendar-nav-button:hover {
+    border-color: #e50914;
+}
+
+.calendar-label {
+    font-weight: bold;
+    text-transform: capitalize;
+    min-width: 160px;
+    text-align: center;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 30px;
+}
+
+.calendar-weekday {
+    text-align: center;
+    color: #777777;
+    font-size: 12px;
+    text-transform: uppercase;
+    padding-bottom: 6px;
+}
+
+.calendar-day {
+    min-height: 80px;
+    background: #111111;
+    border: 1px solid #202020;
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+}
+
+.calendar-day:hover {
+    border-color: #e50914;
+}
+
+.calendar-day.outside {
+    opacity: 0.3;
+}
+
+.calendar-day.today {
+    border-color: #e50914;
+}
+
+.calendar-day-number {
+    font-size: 12px;
+    color: #aaaaaa;
+    margin-bottom: 4px;
+}
+
+.calendar-event-chip {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chip-examen {
+    background: #8b1f1f;
+}
+
+.chip-entrega {
+    background: #1f5f8b;
+}
+
+.chip-tarea {
+    background: #6b5b1f;
+}
+
+.chip-otro {
+    background: #333333;
+}
+
+.calendar-upcoming-header {
+    margin-bottom: 12px;
+}
+
+
+/* =========================
+   FAVORITOS
+========================= */
+
+.favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    min-height: 40px;
+}
+
+.favorites-grid:empty::after {
+    content: "Aún no tienes archivos favoritos.";
+    color: #555555;
+}
+
+.favorite-card {
+    background: #111111;
+    border: 1px solid #202020;
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.favorite-card:hover {
+    border-color: #e50914;
+}
+
+.favorite-card-title {
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.favorite-card-meta {
+    color: #999999;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+
+/* =========================
+   PERFIL
+========================= */
+
+.profile-box {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.profile-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #e50914;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.profile-name {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.profile-email {
+    color: #999999;
+    font-size: 14px;
 }

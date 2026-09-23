@@ -170,6 +170,10 @@ async function onLogin(user) {
         setupUserMenu();
         setupScopeTabs();
         setupShareModal();
+        setupNavigation();
+        setupScheduleModal();
+        setupTaskModal();
+        setupEventModal();
 
     }
 
@@ -243,6 +247,14 @@ async function refreshEverything() {
 
     await loadShares();
     await loadDocuments();
+    await loadSchedule();
+    await loadTasks();
+    await loadEvents();
+
+    renderDashboard();
+    renderFavoritesView();
+    renderProfileView();
+
 }
 
 function showAuthStatus(elementId, message) {
@@ -536,6 +548,1512 @@ function setupUserMenu() {
             await loadOwnProfile();
 
         });
+
+    }
+
+}
+
+// ---------------------------------------------
+// NAVEGACIÓN (sidebar / vistas)
+// ---------------------------------------------
+
+function setupNavigation() {
+
+    const links =
+        document.querySelectorAll(".sidebar-link");
+
+    const sidebar =
+        document.getElementById("sidebar");
+
+    const toggle =
+        document.getElementById("sidebarToggle");
+
+    links.forEach(function (link) {
+
+        link.addEventListener("click", function () {
+
+            const viewName =
+                link.dataset.view;
+
+            links.forEach(function (l) {
+                l.classList.remove("active");
+            });
+
+            link.classList.add("active");
+
+            document
+                .querySelectorAll(".view")
+                .forEach(function (view) {
+                    view.classList.remove("active");
+                });
+
+            const targetView =
+                document.getElementById("view-" + viewName);
+
+            if (targetView) {
+                targetView.classList.add("active");
+            }
+
+            if (viewName === "horario") {
+                loadSchedule();
+            }
+
+            if (viewName === "dashboard") {
+                renderDashboard();
+            }
+
+            if (viewName === "favoritos") {
+                renderFavoritesView();
+            }
+
+            if (viewName === "perfil") {
+                renderProfileView();
+            }
+
+            if (sidebar) {
+                sidebar.classList.remove("open");
+            }
+
+        });
+
+    });
+
+    if (toggle && sidebar) {
+
+        toggle.addEventListener("click", function () {
+            sidebar.classList.toggle("open");
+        });
+
+    }
+
+}
+
+// ---------------------------------------------
+// HORARIO (schedule_slots)
+// ---------------------------------------------
+
+const DAY_NAMES = {
+    1: "Lunes",
+    2: "Martes",
+    3: "Miércoles",
+    4: "Jueves",
+    5: "Viernes"
+};
+
+// Horario de partida: se usa solo para precargar la tabla la
+// primera vez que el usuario abre "Mi horario" (tabla vacía).
+// A partir de ahí son datos normales, 100% editables.
+const INITIAL_SCHEDULE = [
+    { day: 1, start_time: "08:15", end_time: "09:15", subject: "PROGR", teacher: "Luis Manuel Vázquez Venegas" },
+    { day: 1, start_time: "09:15", end_time: "10:15", subject: "PROGR", teacher: "Luis Manuel Vázquez Venegas" },
+    { day: 1, start_time: "10:15", end_time: "11:15", subject: "ENDES", teacher: "Pablo Hernández García" },
+    { day: 1, start_time: "11:45", end_time: "12:45", subject: "IPE I", teacher: "Alejandro Martín Rodríguez" },
+    { day: 1, start_time: "12:45", end_time: "13:45", subject: "LMSGI", teacher: "Pablo Hernández García" },
+    { day: 1, start_time: "13:45", end_time: "14:45", subject: "SIINF", teacher: "Juan Aguilar Ferrer" },
+
+    { day: 2, start_time: "08:15", end_time: "09:15", subject: "BADAT", teacher: "Miguel Ángel García Blanes" },
+    { day: 2, start_time: "09:15", end_time: "10:15", subject: "BADAT", teacher: "Miguel Ángel García Blanes" },
+    { day: 2, start_time: "10:15", end_time: "11:15", subject: "PROGR", teacher: "Luis Manuel Vázquez Venegas" },
+    { day: 2, start_time: "11:45", end_time: "12:45", subject: "ENDES", teacher: "Pablo Hernández García" },
+    { day: 2, start_time: "12:45", end_time: "13:45", subject: "SASP", teacher: "Luis Manuel Vázquez Venegas" },
+    { day: 2, start_time: "13:45", end_time: "14:45", subject: "SIINF", teacher: "Juan Aguilar Ferrer" },
+
+    { day: 3, start_time: "08:15", end_time: "09:15", subject: "DASPGS", teacher: "Luis Manuel Vázquez Venegas" },
+    { day: 3, start_time: "09:15", end_time: "10:15", subject: "BADAT", teacher: "Miguel Ángel García Blanes" },
+    { day: 3, start_time: "10:15", end_time: "11:15", subject: "BADAT", teacher: "Miguel Ángel García Blanes", notes: "+ tutoría" },
+    { day: 3, start_time: "11:45", end_time: "12:45", subject: "LMSGI", teacher: "Pablo Hernández García" },
+    { day: 3, start_time: "12:45", end_time: "13:45", subject: "PROGR", teacher: "Luis Manuel Vázquez Venegas" },
+    { day: 3, start_time: "13:45", end_time: "14:45", subject: "IPE I", teacher: "Alejandro Martín Rodríguez" },
+
+    { day: 4, start_time: "08:15", end_time: "09:15", subject: "ENDES", teacher: "Pablo Hernández García" },
+    { day: 4, start_time: "09:15", end_time: "10:15", subject: "PROGR", teacher: "Luis Manuel Vázquez Venegas" },
+    { day: 4, start_time: "10:15", end_time: "11:15", subject: "PROGR", teacher: "Luis Manuel Vázquez Venegas" },
+    { day: 4, start_time: "11:45", end_time: "12:45", subject: "Tutoría / SIINF", teacher: "" },
+    { day: 4, start_time: "12:45", end_time: "13:45", subject: "SIINF", teacher: "Juan Aguilar Ferrer" },
+    { day: 4, start_time: "13:45", end_time: "14:45", subject: "IPE I", teacher: "Alejandro Martín Rodríguez" },
+
+    { day: 5, start_time: "08:15", end_time: "09:15", subject: "LMSGI", teacher: "Pablo Hernández García" },
+    { day: 5, start_time: "09:15", end_time: "10:15", subject: "PROGR", teacher: "Luis Manuel Vázquez Venegas" },
+    { day: 5, start_time: "10:15", end_time: "11:15", subject: "PROGR", teacher: "Luis Manuel Vázquez Venegas" },
+    { day: 5, start_time: "11:45", end_time: "12:45", subject: "BADAT", teacher: "Miguel Ángel García Blanes" },
+    { day: 5, start_time: "12:45", end_time: "13:45", subject: "BADAT", teacher: "Miguel Ángel García Blanes" },
+    { day: 5, start_time: "13:45", end_time: "14:45", subject: "SIINF", teacher: "Juan Aguilar Ferrer" }
+];
+
+let scheduleList = [];
+let scheduleLoaded = false;
+
+async function loadSchedule() {
+
+    const grid =
+        document.getElementById("scheduleGrid");
+
+    if (!supabaseClient || !currentUser) {
+        return;
+    }
+
+    if (!scheduleLoaded) {
+
+        grid.innerHTML =
+            '<div class="empty">Cargando horario...</div>';
+
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("schedule_slots")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .order("day", { ascending: true })
+            .order("start_time", { ascending: true });
+
+    if (error) {
+
+        console.error("Error leyendo el horario:", error);
+
+        grid.innerHTML =
+            '<div class="empty">Error al cargar el horario.</div>';
+
+        return;
+    }
+
+    // Primera vez: tabla vacía -> precargamos el horario inicial.
+    if ((data || []).length === 0 && !scheduleLoaded) {
+
+        await seedInitialSchedule();
+        scheduleLoaded = true;
+        return loadSchedule();
+    }
+
+    scheduleLoaded = true;
+    scheduleList = data || [];
+
+    renderSchedule();
+}
+
+async function seedInitialSchedule() {
+
+    const rows =
+        INITIAL_SCHEDULE.map(function (slot) {
+
+            return {
+                user_id: currentUser.id,
+                day: slot.day,
+                start_time: slot.start_time,
+                end_time: slot.end_time,
+                subject: slot.subject,
+                teacher: slot.teacher || null,
+                notes: slot.notes || null
+            };
+
+        });
+
+    const { error } =
+        await supabaseClient
+            .from("schedule_slots")
+            .insert(rows);
+
+    if (error) {
+        console.error("Error precargando el horario:", error);
+    }
+}
+
+function renderSchedule() {
+
+    const grid =
+        document.getElementById("scheduleGrid");
+
+    if (!grid) {
+        return;
+    }
+
+    grid.innerHTML = "";
+
+    for (let day = 1; day <= 5; day++) {
+
+        const dayColumn =
+            document.createElement("div");
+
+        dayColumn.className = "schedule-day";
+
+        const dayClasses =
+            scheduleList.filter(function (slot) {
+                return slot.day === day;
+            });
+
+        let html =
+            '<div class="schedule-day-title">' +
+            DAY_NAMES[day] +
+            "</div>";
+
+        if (dayClasses.length === 0) {
+
+            html +=
+                '<div class="schedule-day-empty">Sin clases</div>';
+
+        } else {
+
+            dayClasses.forEach(function (slot) {
+
+                html +=
+                    '<div class="class-card" data-id="' +
+                    slot.id +
+                    '">' +
+                    '<div class="class-card-time">' +
+                    slot.start_time.substring(0, 5) +
+                    " - " +
+                    slot.end_time.substring(0, 5) +
+                    "</div>" +
+                    '<div class="class-card-subject">' +
+                    escapeHTML(slot.subject) +
+                    "</div>" +
+                    (slot.teacher
+                        ? '<div class="class-card-teacher">' + escapeHTML(slot.teacher) + "</div>"
+                        : "") +
+                    (slot.notes
+                        ? '<div class="class-card-notes">' + escapeHTML(slot.notes) + "</div>"
+                        : "") +
+                    "</div>";
+
+            });
+
+        }
+
+        dayColumn.innerHTML = html;
+        grid.appendChild(dayColumn);
+
+    }
+
+    grid
+        .querySelectorAll(".class-card")
+        .forEach(function (card) {
+
+            card.addEventListener("click", function () {
+
+                const slot =
+                    scheduleList.find(function (s) {
+                        return String(s.id) === card.dataset.id;
+                    });
+
+                if (slot) {
+                    openClassModal(slot);
+                }
+
+            });
+
+        });
+
+}
+
+function openClassModal(slot) {
+
+    const modal =
+        document.getElementById("classModal");
+
+    const title =
+        document.getElementById("classModalTitle");
+
+    const deleteButton =
+        document.getElementById("deleteClassButton");
+
+    document.getElementById("classId").value =
+        slot ? slot.id : "";
+
+    document.getElementById("classDay").value =
+        slot ? slot.day : "1";
+
+    document.getElementById("classStart").value =
+        slot ? slot.start_time.substring(0, 5) : "";
+
+    document.getElementById("classEnd").value =
+        slot ? slot.end_time.substring(0, 5) : "";
+
+    document.getElementById("classSubject").value =
+        slot ? slot.subject : "";
+
+    document.getElementById("classTeacher").value =
+        slot && slot.teacher ? slot.teacher : "";
+
+    document.getElementById("classNotes").value =
+        slot && slot.notes ? slot.notes : "";
+
+    document.getElementById("classStatus").textContent = "";
+
+    title.textContent =
+        slot ? "Editar clase" : "Añadir clase";
+
+    if (deleteButton) {
+        deleteButton.classList.toggle("hidden", !slot);
+    }
+
+    modal.classList.add("show");
+
+}
+
+function closeClassModal() {
+
+    document
+        .getElementById("classModal")
+        .classList.remove("show");
+
+}
+
+function setupScheduleModal() {
+
+    const openButton =
+        document.getElementById("openAddClass");
+
+    const closeButton =
+        document.getElementById("closeClassModal");
+
+    const form =
+        document.getElementById("scheduleForm");
+
+    const deleteButton =
+        document.getElementById("deleteClassButton");
+
+    if (openButton) {
+
+        openButton.addEventListener("click", function () {
+            openClassModal(null);
+        });
+
+    }
+
+    if (closeButton) {
+
+        closeButton.addEventListener("click", closeClassModal);
+
+    }
+
+    if (form) {
+
+        form.addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+            const status =
+                document.getElementById("classStatus");
+
+            const id =
+                document.getElementById("classId").value;
+
+            const payload = {
+                user_id: currentUser.id,
+                day: Number(document.getElementById("classDay").value),
+                start_time: document.getElementById("classStart").value,
+                end_time: document.getElementById("classEnd").value,
+                subject: document.getElementById("classSubject").value.trim(),
+                teacher: document.getElementById("classTeacher").value.trim() || null,
+                notes: document.getElementById("classNotes").value.trim() || null
+            };
+
+            status.textContent = "Guardando...";
+
+            let error;
+
+            if (id) {
+
+                ({ error } =
+                    await supabaseClient
+                        .from("schedule_slots")
+                        .update(payload)
+                        .eq("id", id)
+                        .eq("user_id", currentUser.id));
+
+            } else {
+
+                ({ error } =
+                    await supabaseClient
+                        .from("schedule_slots")
+                        .insert(payload));
+
+            }
+
+            if (error) {
+
+                console.error("Error guardando la clase:", error);
+                status.textContent = "Error al guardar: " + error.message;
+                return;
+            }
+
+            closeClassModal();
+            await loadSchedule();
+
+        });
+
+    }
+
+    if (deleteButton) {
+
+        deleteButton.addEventListener("click", async function () {
+
+            const id =
+                document.getElementById("classId").value;
+
+            if (!id) {
+                return;
+            }
+
+            if (!confirm("¿Eliminar esta clase del horario?")) {
+                return;
+            }
+
+            const { error } =
+                await supabaseClient
+                    .from("schedule_slots")
+                    .delete()
+                    .eq("id", id)
+                    .eq("user_id", currentUser.id);
+
+            if (error) {
+
+                console.error("Error eliminando la clase:", error);
+                document.getElementById("classStatus").textContent =
+                    "Error al eliminar: " + error.message;
+                return;
+            }
+
+            closeClassModal();
+            await loadSchedule();
+
+        });
+
+    }
+
+}
+
+// ---------------------------------------------
+// TAREAS (tasks)
+// ---------------------------------------------
+
+let tasksList = [];
+
+async function loadTasks() {
+
+    if (!supabaseClient || !currentUser) {
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("tasks")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .order("completed", { ascending: true })
+            .order("due_date", { ascending: true, nullsFirst: false });
+
+    if (error) {
+        console.error("Error leyendo tareas:", error);
+        return;
+    }
+
+    tasksList = data || [];
+
+    renderTasks();
+    renderDashboard();
+}
+
+function formatDueDate(dateStr) {
+
+    if (!dateStr) {
+        return "Sin fecha límite";
+    }
+
+    const parts = dateStr.split("-");
+
+    return parts[2] + "/" + parts[1] + "/" + parts[0];
+}
+
+function renderTasks() {
+
+    const list =
+        document.getElementById("taskList");
+
+    if (!list) {
+        return;
+    }
+
+    if (tasksList.length === 0) {
+
+        list.innerHTML =
+            '<div class="empty">Todavía no tienes tareas. Pulsa "+ Añadir tarea" para crear la primera.</div>';
+
+        return;
+    }
+
+    list.innerHTML = "";
+
+    tasksList.forEach(function (task) {
+
+        const row =
+            document.createElement("div");
+
+        row.className =
+            "task-row" + (task.completed ? " completed" : "");
+
+        row.innerHTML =
+            '<input type="checkbox" class="task-row-checkbox" ' +
+            (task.completed ? "checked" : "") +
+            ' data-id="' + task.id + '">' +
+            '<div class="task-row-body" data-id="' + task.id + '">' +
+            '<div class="task-row-title' + (task.completed ? " completed-text" : "") + '">' +
+            escapeHTML(task.title) +
+            "</div>" +
+            '<div class="task-row-meta">' +
+            (task.subject ? escapeHTML(task.subject) + " · " : "") +
+            formatDueDate(task.due_date) +
+            "</div>" +
+            "</div>" +
+            '<span class="priority-badge priority-' + task.priority + '">' +
+            task.priority +
+            "</span>";
+
+        list.appendChild(row);
+
+    });
+
+    list
+        .querySelectorAll(".task-row-checkbox")
+        .forEach(function (checkbox) {
+
+            checkbox.addEventListener("click", async function (event) {
+
+                event.stopPropagation();
+
+                const task =
+                    tasksList.find(function (t) {
+                        return String(t.id) === checkbox.dataset.id;
+                    });
+
+                if (!task) {
+                    return;
+                }
+
+                const { error } =
+                    await supabaseClient
+                        .from("tasks")
+                        .update({ completed: checkbox.checked })
+                        .eq("id", task.id)
+                        .eq("user_id", currentUser.id);
+
+                if (error) {
+                    console.error("Error actualizando tarea:", error);
+                    return;
+                }
+
+                await loadTasks();
+
+            });
+
+        });
+
+    list
+        .querySelectorAll(".task-row-body")
+        .forEach(function (body) {
+
+            body.addEventListener("click", function () {
+
+                const task =
+                    tasksList.find(function (t) {
+                        return String(t.id) === body.dataset.id;
+                    });
+
+                if (task) {
+                    openTaskModal(task);
+                }
+
+            });
+
+        });
+
+}
+
+function openTaskModal(task) {
+
+    const modal =
+        document.getElementById("taskModal");
+
+    const title =
+        document.getElementById("taskModalTitle");
+
+    const deleteButton =
+        document.getElementById("deleteTaskButton");
+
+    document.getElementById("taskId").value =
+        task ? task.id : "";
+
+    document.getElementById("taskTitle").value =
+        task ? task.title : "";
+
+    document.getElementById("taskSubject").value =
+        task && task.subject ? task.subject : "";
+
+    document.getElementById("taskDue").value =
+        task && task.due_date ? task.due_date : "";
+
+    document.getElementById("taskPriority").value =
+        task ? task.priority : "media";
+
+    document.getElementById("taskCompleted").checked =
+        task ? task.completed === true : false;
+
+    document.getElementById("taskStatus").textContent = "";
+
+    title.textContent =
+        task ? "Editar tarea" : "Añadir tarea";
+
+    if (deleteButton) {
+        deleteButton.classList.toggle("hidden", !task);
+    }
+
+    modal.classList.add("show");
+
+}
+
+function closeTaskModal() {
+
+    document
+        .getElementById("taskModal")
+        .classList.remove("show");
+
+}
+
+function setupTaskModal() {
+
+    const openButton =
+        document.getElementById("openAddTask");
+
+    const closeButton =
+        document.getElementById("closeTaskModal");
+
+    const form =
+        document.getElementById("taskForm");
+
+    const deleteButton =
+        document.getElementById("deleteTaskButton");
+
+    if (openButton) {
+
+        openButton.addEventListener("click", function () {
+            openTaskModal(null);
+        });
+
+    }
+
+    if (closeButton) {
+
+        closeButton.addEventListener("click", closeTaskModal);
+
+    }
+
+    if (form) {
+
+        form.addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+            const status =
+                document.getElementById("taskStatus");
+
+            const id =
+                document.getElementById("taskId").value;
+
+            const payload = {
+                user_id: currentUser.id,
+                title: document.getElementById("taskTitle").value.trim(),
+                subject: document.getElementById("taskSubject").value.trim() || null,
+                due_date: document.getElementById("taskDue").value || null,
+                priority: document.getElementById("taskPriority").value,
+                completed: document.getElementById("taskCompleted").checked
+            };
+
+            status.textContent = "Guardando...";
+
+            let error;
+
+            if (id) {
+
+                ({ error } =
+                    await supabaseClient
+                        .from("tasks")
+                        .update(payload)
+                        .eq("id", id)
+                        .eq("user_id", currentUser.id));
+
+            } else {
+
+                ({ error } =
+                    await supabaseClient
+                        .from("tasks")
+                        .insert(payload));
+
+            }
+
+            if (error) {
+                console.error("Error guardando la tarea:", error);
+                status.textContent = "Error al guardar: " + error.message;
+                return;
+            }
+
+            closeTaskModal();
+            await loadTasks();
+
+        });
+
+    }
+
+    if (deleteButton) {
+
+        deleteButton.addEventListener("click", async function () {
+
+            const id =
+                document.getElementById("taskId").value;
+
+            if (!id || !confirm("¿Eliminar esta tarea?")) {
+                return;
+            }
+
+            const { error } =
+                await supabaseClient
+                    .from("tasks")
+                    .delete()
+                    .eq("id", id)
+                    .eq("user_id", currentUser.id);
+
+            if (error) {
+                console.error("Error eliminando tarea:", error);
+                return;
+            }
+
+            closeTaskModal();
+            await loadTasks();
+
+        });
+
+    }
+
+}
+
+// ---------------------------------------------
+// CALENDARIO (events)
+// ---------------------------------------------
+
+let eventsList = [];
+let calendarViewDate = new Date();
+
+async function loadEvents() {
+
+    if (!supabaseClient || !currentUser) {
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("events")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .order("start_at", { ascending: true });
+
+    if (error) {
+        console.error("Error leyendo eventos:", error);
+        return;
+    }
+
+    eventsList = data || [];
+
+    renderCalendar();
+    renderUpcomingEvents();
+    renderDashboard();
+}
+
+function renderCalendar() {
+
+    const grid =
+        document.getElementById("calendarGrid");
+
+    const label =
+        document.getElementById("calendarLabel");
+
+    if (!grid || !label) {
+        return;
+    }
+
+    const year =
+        calendarViewDate.getFullYear();
+
+    const month =
+        calendarViewDate.getMonth();
+
+    const monthNames = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    ];
+
+    label.textContent =
+        monthNames[month] + " " + year;
+
+    grid.innerHTML = "";
+
+    ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].forEach(function (name) {
+
+        const el =
+            document.createElement("div");
+
+        el.className = "calendar-weekday";
+        el.textContent = name;
+
+        grid.appendChild(el);
+
+    });
+
+    const firstDay =
+        new Date(year, month, 1);
+
+    // Lunes = 0 ... Domingo = 6
+    let startOffset =
+        firstDay.getDay() - 1;
+
+    if (startOffset < 0) {
+        startOffset = 6;
+    }
+
+    const daysInMonth =
+        new Date(year, month + 1, 0).getDate();
+
+    const today =
+        new Date();
+
+    const totalCells =
+        Math.ceil((startOffset + daysInMonth) / 7) * 7;
+
+    for (let i = 0; i < totalCells; i++) {
+
+        const dayNumber =
+            i - startOffset + 1;
+
+        const cell =
+            document.createElement("div");
+
+        const cellDate =
+            new Date(year, month, dayNumber);
+
+        const isOutside =
+            dayNumber < 1 || dayNumber > daysInMonth;
+
+        const isToday =
+            !isOutside &&
+            cellDate.toDateString() === today.toDateString();
+
+        cell.className =
+            "calendar-day" +
+            (isOutside ? " outside" : "") +
+            (isToday ? " today" : "");
+
+        let html =
+            '<div class="calendar-day-number">' +
+            (isOutside ? "" : dayNumber) +
+            "</div>";
+
+        if (!isOutside) {
+
+            const dayEvents =
+                eventsList.filter(function (ev) {
+
+                    const evDate =
+                        new Date(ev.start_at);
+
+                    return evDate.toDateString() === cellDate.toDateString();
+
+                });
+
+            dayEvents.forEach(function (ev) {
+
+                html +=
+                    '<div class="calendar-event-chip chip-' + ev.type + '" data-id="' + ev.id + '">' +
+                    escapeHTML(ev.title) +
+                    "</div>";
+
+            });
+
+        }
+
+        cell.innerHTML = html;
+
+        if (!isOutside) {
+
+            cell.addEventListener("click", function (event) {
+
+                const chip =
+                    event.target.closest(".calendar-event-chip");
+
+                if (chip) {
+
+                    const ev =
+                        eventsList.find(function (e) {
+                            return String(e.id) === chip.dataset.id;
+                        });
+
+                    if (ev) {
+                        openEventModal(ev);
+                    }
+
+                    return;
+                }
+
+                const prefillDate =
+                    year + "-" +
+                    String(month + 1).padStart(2, "0") + "-" +
+                    String(dayNumber).padStart(2, "0");
+
+                openEventModal(null, prefillDate);
+
+            });
+
+        }
+
+        grid.appendChild(cell);
+
+    }
+
+}
+
+function renderUpcomingEvents() {
+
+    const container =
+        document.getElementById("upcomingEvents");
+
+    if (!container) {
+        return;
+    }
+
+    const now =
+        new Date();
+
+    const upcoming =
+        eventsList
+            .filter(function (ev) {
+                return new Date(ev.start_at) >= now;
+            })
+            .slice(0, 8);
+
+    if (upcoming.length === 0) {
+
+        container.innerHTML =
+            '<div class="dashboard-empty">No tienes eventos próximos.</div>';
+
+        return;
+    }
+
+    container.innerHTML = "";
+
+    upcoming.forEach(function (ev) {
+
+        const row =
+            document.createElement("div");
+
+        row.className = "dashboard-row";
+        row.dataset.id = ev.id;
+
+        row.innerHTML =
+            '<div class="dashboard-row-title">' + escapeHTML(ev.title) + "</div>" +
+            '<div class="dashboard-row-meta">' +
+            formatDateTime(ev.start_at) + " · " + ev.type +
+            "</div>";
+
+        row.addEventListener("click", function () {
+            openEventModal(ev);
+        });
+
+        container.appendChild(row);
+
+    });
+
+}
+
+function formatDateTime(isoString) {
+
+    const d =
+        new Date(isoString);
+
+    return d.toLocaleDateString("es-ES") + " " +
+        d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+}
+
+function toDatetimeLocalValue(isoString) {
+
+    if (!isoString) {
+        return "";
+    }
+
+    const d =
+        new Date(isoString);
+
+    const pad =
+        function (n) { return String(n).padStart(2, "0"); };
+
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+        "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+
+}
+
+function openEventModal(ev, prefillDate) {
+
+    const modal =
+        document.getElementById("eventModal");
+
+    const title =
+        document.getElementById("eventModalTitle");
+
+    const deleteButton =
+        document.getElementById("deleteEventButton");
+
+    document.getElementById("eventId").value =
+        ev ? ev.id : "";
+
+    document.getElementById("eventTitle").value =
+        ev ? ev.title : "";
+
+    document.getElementById("eventType").value =
+        ev ? ev.type : "otro";
+
+    document.getElementById("eventStart").value =
+        ev ? toDatetimeLocalValue(ev.start_at) :
+        (prefillDate ? prefillDate + "T09:00" : "");
+
+    document.getElementById("eventEnd").value =
+        ev ? toDatetimeLocalValue(ev.end_at) : "";
+
+    document.getElementById("eventDescription").value =
+        ev && ev.description ? ev.description : "";
+
+    document.getElementById("eventStatus").textContent = "";
+
+    title.textContent =
+        ev ? "Editar evento" : "Añadir evento";
+
+    if (deleteButton) {
+        deleteButton.classList.toggle("hidden", !ev);
+    }
+
+    modal.classList.add("show");
+
+}
+
+function closeEventModal() {
+
+    document
+        .getElementById("eventModal")
+        .classList.remove("show");
+
+}
+
+function setupEventModal() {
+
+    const openButton =
+        document.getElementById("openAddEvent");
+
+    const closeButton =
+        document.getElementById("closeEventModal");
+
+    const form =
+        document.getElementById("eventForm");
+
+    const deleteButton =
+        document.getElementById("deleteEventButton");
+
+    const prevButton =
+        document.getElementById("calendarPrev");
+
+    const nextButton =
+        document.getElementById("calendarNext");
+
+    if (openButton) {
+
+        openButton.addEventListener("click", function () {
+            openEventModal(null);
+        });
+
+    }
+
+    if (closeButton) {
+
+        closeButton.addEventListener("click", closeEventModal);
+
+    }
+
+    if (prevButton) {
+
+        prevButton.addEventListener("click", function () {
+            calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+    }
+
+    if (nextButton) {
+
+        nextButton.addEventListener("click", function () {
+            calendarViewDate.setMonth(calendarViewDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+    }
+
+    if (form) {
+
+        form.addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+            const status =
+                document.getElementById("eventStatus");
+
+            const id =
+                document.getElementById("eventId").value;
+
+            const startValue =
+                document.getElementById("eventStart").value;
+
+            const endValue =
+                document.getElementById("eventEnd").value;
+
+            const payload = {
+                user_id: currentUser.id,
+                title: document.getElementById("eventTitle").value.trim(),
+                type: document.getElementById("eventType").value,
+                start_at: startValue ? new Date(startValue).toISOString() : null,
+                end_at: endValue ? new Date(endValue).toISOString() : null,
+                description: document.getElementById("eventDescription").value.trim() || null
+            };
+
+            status.textContent = "Guardando...";
+
+            let error;
+
+            if (id) {
+
+                ({ error } =
+                    await supabaseClient
+                        .from("events")
+                        .update(payload)
+                        .eq("id", id)
+                        .eq("user_id", currentUser.id));
+
+            } else {
+
+                ({ error } =
+                    await supabaseClient
+                        .from("events")
+                        .insert(payload));
+
+            }
+
+            if (error) {
+                console.error("Error guardando el evento:", error);
+                status.textContent = "Error al guardar: " + error.message;
+                return;
+            }
+
+            closeEventModal();
+            await loadEvents();
+
+        });
+
+    }
+
+    if (deleteButton) {
+
+        deleteButton.addEventListener("click", async function () {
+
+            const id =
+                document.getElementById("eventId").value;
+
+            if (!id || !confirm("¿Eliminar este evento?")) {
+                return;
+            }
+
+            const { error } =
+                await supabaseClient
+                    .from("events")
+                    .delete()
+                    .eq("id", id)
+                    .eq("user_id", currentUser.id);
+
+            if (error) {
+                console.error("Error eliminando evento:", error);
+                return;
+            }
+
+            closeEventModal();
+            await loadEvents();
+
+        });
+
+    }
+
+}
+
+// ---------------------------------------------
+// DASHBOARD
+// ---------------------------------------------
+
+function renderDashboard() {
+
+    const statsBox =
+        document.getElementById("dashboardStats");
+
+    if (!statsBox) {
+        return;
+    }
+
+    const myFiles =
+        documentsList.filter(function (d) {
+            return d.owner_id === currentUser.id;
+        });
+
+    const favoriteFiles =
+        myFiles.filter(function (d) {
+            return d.favorite === true;
+        });
+
+    const pendingTasks =
+        tasksList.filter(function (t) {
+            return !t.completed;
+        });
+
+    const now = new Date();
+
+    const upcomingEventsCount =
+        eventsList.filter(function (ev) {
+            return new Date(ev.start_at) >= now;
+        }).length;
+
+    statsBox.innerHTML =
+        statCard(myFiles.length, "Archivos") +
+        statCard(favoriteFiles.length, "Favoritos") +
+        statCard(pendingTasks.length, "Tareas pendientes") +
+        statCard(upcomingEventsCount, "Próximos eventos");
+
+    // Próximas tareas
+    const tasksBox =
+        document.getElementById("dashboardTasks");
+
+    if (tasksBox) {
+
+        const nextTasks =
+            pendingTasks.slice(0, 5);
+
+        tasksBox.innerHTML =
+            nextTasks.length === 0
+                ? '<div class="dashboard-empty">Sin tareas pendientes.</div>'
+                : nextTasks.map(function (t) {
+                    return dashboardRow(t.title, formatDueDate(t.due_date));
+                }).join("");
+
+    }
+
+    // Próximos eventos
+    const eventsBox =
+        document.getElementById("dashboardEvents");
+
+    if (eventsBox) {
+
+        const nextEvents =
+            eventsList
+                .filter(function (ev) { return new Date(ev.start_at) >= now; })
+                .slice(0, 5);
+
+        eventsBox.innerHTML =
+            nextEvents.length === 0
+                ? '<div class="dashboard-empty">Sin eventos próximos.</div>'
+                : nextEvents.map(function (ev) {
+                    return dashboardRow(ev.title, formatDateTime(ev.start_at));
+                }).join("");
+
+    }
+
+    // Horario de hoy
+    const todayBox =
+        document.getElementById("dashboardToday");
+
+    if (todayBox) {
+
+        const weekday =
+            now.getDay();
+
+        const todaySlots =
+            (weekday >= 1 && weekday <= 5)
+                ? scheduleList.filter(function (s) { return s.day === weekday; })
+                : [];
+
+        todayBox.innerHTML =
+            todaySlots.length === 0
+                ? '<div class="dashboard-empty">No tienes clases hoy.</div>'
+                : todaySlots.map(function (s) {
+                    return dashboardRow(
+                        s.subject,
+                        s.start_time.substring(0, 5) + " - " + s.end_time.substring(0, 5)
+                    );
+                }).join("");
+
+    }
+
+    // Archivos recientes
+    const filesBox =
+        document.getElementById("dashboardFiles");
+
+    if (filesBox) {
+
+        const recent =
+            myFiles.slice(0, 5);
+
+        filesBox.innerHTML =
+            recent.length === 0
+                ? '<div class="dashboard-empty">Aún no has subido archivos.</div>'
+                : recent.map(function (f) {
+                    return dashboardRow(f.title || f.name, f.module || "");
+                }).join("");
+
+    }
+
+    // Favoritos
+    const favBox =
+        document.getElementById("dashboardFavorites");
+
+    if (favBox) {
+
+        const favs =
+            favoriteFiles.slice(0, 5);
+
+        favBox.innerHTML =
+            favs.length === 0
+                ? '<div class="dashboard-empty">Aún no tienes favoritos.</div>'
+                : favs.map(function (f) {
+                    return dashboardRow(f.title || f.name, f.module || "");
+                }).join("");
+
+    }
+
+}
+
+function statCard(value, label) {
+
+    return (
+        '<div class="stat-card">' +
+        '<div class="stat-card-value">' + value + "</div>" +
+        '<div class="stat-card-label">' + label + "</div>" +
+        "</div>"
+    );
+
+}
+
+function dashboardRow(title, meta) {
+
+    return (
+        '<div class="dashboard-row">' +
+        '<div class="dashboard-row-title">' + escapeHTML(title) + "</div>" +
+        '<div class="dashboard-row-meta">' + escapeHTML(meta) + "</div>" +
+        "</div>"
+    );
+
+}
+
+// ---------------------------------------------
+// FAVORITOS (vista dedicada)
+// ---------------------------------------------
+
+function renderFavoritesView() {
+
+    const grid =
+        document.getElementById("favoritesGrid");
+
+    if (!grid) {
+        return;
+    }
+
+    const favorites =
+        documentsList.filter(function (d) {
+            return d.owner_id === currentUser.id && d.favorite === true;
+        });
+
+    if (favorites.length === 0) {
+
+        grid.innerHTML = "";
+        return;
+    }
+
+    grid.innerHTML = "";
+
+    favorites.forEach(function (item) {
+
+        const card =
+            document.createElement("div");
+
+        card.className = "favorite-card";
+
+        card.innerHTML =
+            '<div class="favorite-card-title">★ ' + escapeHTML(item.title || item.name) + "</div>" +
+            '<div class="favorite-card-meta">' +
+            escapeHTML(item.module || "") + (item.topic ? " · " + escapeHTML(item.topic) : "") +
+            "</div>";
+
+        card.addEventListener("click", function () {
+            openDocument(item);
+        });
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+// ---------------------------------------------
+// PERFIL (vista dedicada)
+// ---------------------------------------------
+
+function renderProfileView() {
+
+    const nameEl =
+        document.getElementById("profileName");
+
+    const emailEl =
+        document.getElementById("profileEmail");
+
+    const avatarEl =
+        document.getElementById("profileAvatar");
+
+    const statsBox =
+        document.getElementById("profileStats");
+
+    if (!nameEl || !currentUser) {
+        return;
+    }
+
+    const displayName =
+        (currentProfile && currentProfile.display_name) || currentUser.email;
+
+    nameEl.textContent = displayName;
+    emailEl.textContent = currentUser.email;
+    avatarEl.textContent = displayName.charAt(0).toUpperCase();
+
+    const myFiles =
+        documentsList.filter(function (d) {
+            return d.owner_id === currentUser.id;
+        });
+
+    const favoriteFiles =
+        myFiles.filter(function (d) {
+            return d.favorite === true;
+        });
+
+    if (statsBox) {
+
+        statsBox.innerHTML =
+            statCard(myFiles.length, "Archivos subidos") +
+            statCard(favoriteFiles.length, "Favoritos") +
+            statCard(tasksList.length, "Tareas totales") +
+            statCard(eventsList.length, "Eventos totales");
 
     }
 
@@ -2801,6 +4319,9 @@ async function toggleFavorite(item) {
         newValue;
 
     renderDocuments();
+    renderDashboard();
+    renderFavoritesView();
+    renderProfileView();
 }
 
 async function toggleCompleted(item) {
