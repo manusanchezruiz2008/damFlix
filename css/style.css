@@ -153,6 +153,11 @@ select:focus {
     border-color: #e50914;
 }
 
+input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 
 /* =========================
    MODULOS
@@ -1865,20 +1870,57 @@ footer {
     text-overflow: ellipsis;
 }
 
+.chip-academico {
+    background: #1f5f8b;
+}
+
 .chip-examen {
     background: #8b1f1f;
 }
 
-.chip-entrega {
-    background: #1f5f8b;
+.chip-vacaciones {
+    background: #1f8b6e;
 }
 
-.chip-tarea {
-    background: #6b5b1f;
+.chip-festivo {
+    background: #a67c1f;
 }
 
-.chip-otro {
-    background: #333333;
+.chip-personal {
+    background: #5a3d8b;
+}
+
+.calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: #aaaaaa;
+    font-size: 12px;
+}
+
+.calendar-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.official-badge {
+    background: #1a1a1a;
+    border: 1px solid #333333;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #e0cf5c;
+    margin-bottom: 10px;
 }
 
 .calendar-upcoming-header {

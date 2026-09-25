@@ -598,6 +598,14 @@ function setupNavigation() {
                 loadSchedule();
             }
 
+            if (viewName === "calendario") {
+                loadEvents();
+            }
+
+            if (viewName === "tareas") {
+                loadTasks();
+            }
+
             if (viewName === "dashboard") {
                 renderDashboard();
             }
@@ -1342,6 +1350,22 @@ function setupTaskModal() {
 let eventsList = [];
 let calendarViewDate = new Date();
 
+const CATEGORY_ICONS = {
+    academico: "📚",
+    examen: "📝",
+    vacaciones: "🏖️",
+    festivo: "🎉",
+    personal: "👤"
+};
+
+const CATEGORY_LABELS = {
+    academico: "Académico",
+    examen: "Examen/evaluación",
+    vacaciones: "Vacaciones",
+    festivo: "Festivo",
+    personal: "Personal"
+};
+
 async function loadEvents() {
 
     if (!supabaseClient || !currentUser) {
@@ -1356,7 +1380,21 @@ async function loadEvents() {
             .order("start_at", { ascending: true });
 
     if (error) {
+
         console.error("Error leyendo eventos:", error);
+
+        const grid =
+            document.getElementById("calendarGrid");
+
+        if (grid) {
+
+            grid.innerHTML =
+                '<div class="empty">No se pudieron cargar los eventos: ' +
+                escapeHTML(error.message) +
+                "</div>";
+
+        }
+
         return;
     }
 
@@ -1470,8 +1508,8 @@ function renderCalendar() {
             dayEvents.forEach(function (ev) {
 
                 html +=
-                    '<div class="calendar-event-chip chip-' + ev.type + '" data-id="' + ev.id + '">' +
-                    escapeHTML(ev.title) +
+                    '<div class="calendar-event-chip chip-' + ev.category + '" data-id="' + ev.id + '">' +
+                    CATEGORY_ICONS[ev.category] + " " + escapeHTML(ev.title) +
                     "</div>";
 
             });
@@ -1556,9 +1594,9 @@ function renderUpcomingEvents() {
         row.dataset.id = ev.id;
 
         row.innerHTML =
-            '<div class="dashboard-row-title">' + escapeHTML(ev.title) + "</div>" +
+            '<div class="dashboard-row-title">' + CATEGORY_ICONS[ev.category] + " " + escapeHTML(ev.title) + "</div>" +
             '<div class="dashboard-row-meta">' +
-            formatDateTime(ev.start_at) + " · " + ev.type +
+            formatDateTime(ev.start_at) + " · " + CATEGORY_LABELS[ev.category] +
             "</div>";
 
         row.addEventListener("click", function () {
@@ -1608,14 +1646,20 @@ function openEventModal(ev, prefillDate) {
     const deleteButton =
         document.getElementById("deleteEventButton");
 
+    const saveButton =
+        document.getElementById("saveEventButton");
+
+    const officialBadge =
+        document.getElementById("eventOfficialBadge");
+
+    const isOfficial =
+        ev && ev.is_official === true;
+
     document.getElementById("eventId").value =
         ev ? ev.id : "";
 
     document.getElementById("eventTitle").value =
         ev ? ev.title : "";
-
-    document.getElementById("eventType").value =
-        ev ? ev.type : "otro";
 
     document.getElementById("eventStart").value =
         ev ? toDatetimeLocalValue(ev.start_at) :
@@ -1630,10 +1674,24 @@ function openEventModal(ev, prefillDate) {
     document.getElementById("eventStatus").textContent = "";
 
     title.textContent =
-        ev ? "Editar evento" : "Añadir evento";
+        isOfficial ? "Evento del centro" : (ev ? "Editar evento" : "Añadir evento");
+
+    // Eventos oficiales: solo lectura, ni editar ni eliminar.
+    ["eventTitle", "eventStart", "eventEnd", "eventDescription"]
+        .forEach(function (id) {
+            document.getElementById(id).disabled = isOfficial;
+        });
+
+    if (officialBadge) {
+        officialBadge.classList.toggle("hidden", !isOfficial);
+    }
 
     if (deleteButton) {
-        deleteButton.classList.toggle("hidden", !ev);
+        deleteButton.classList.toggle("hidden", !ev || isOfficial);
+    }
+
+    if (saveButton) {
+        saveButton.classList.toggle("hidden", isOfficial);
     }
 
     modal.classList.add("show");
@@ -1721,7 +1779,8 @@ function setupEventModal() {
             const payload = {
                 user_id: currentUser.id,
                 title: document.getElementById("eventTitle").value.trim(),
-                type: document.getElementById("eventType").value,
+                category: "personal",
+                is_official: false,
                 start_at: startValue ? new Date(startValue).toISOString() : null,
                 end_at: endValue ? new Date(endValue).toISOString() : null,
                 description: document.getElementById("eventDescription").value.trim() || null
@@ -1738,7 +1797,8 @@ function setupEventModal() {
                         .from("events")
                         .update(payload)
                         .eq("id", id)
-                        .eq("user_id", currentUser.id));
+                        .eq("user_id", currentUser.id)
+                        .eq("is_official", false));
 
             } else {
 
@@ -1778,7 +1838,8 @@ function setupEventModal() {
                     .from("events")
                     .delete()
                     .eq("id", id)
-                    .eq("user_id", currentUser.id);
+                    .eq("user_id", currentUser.id)
+                    .eq("is_official", false);
 
             if (error) {
                 console.error("Error eliminando evento:", error);
@@ -1868,7 +1929,7 @@ function renderDashboard() {
             nextEvents.length === 0
                 ? '<div class="dashboard-empty">Sin eventos próximos.</div>'
                 : nextEvents.map(function (ev) {
-                    return dashboardRow(ev.title, formatDateTime(ev.start_at));
+                    return dashboardRow(CATEGORY_ICONS[ev.category] + " " + ev.title, formatDateTime(ev.start_at));
                 }).join("");
 
     }

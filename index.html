@@ -111,687 +111,734 @@
     <!-- APP (oculta hasta iniciar sesión) -->
     <div id="app" class="hidden">
 
-        <div class="app-shell">
+    <div class="app-shell">
 
-            <!-- SIDEBAR -->
-            <aside id="sidebar" class="sidebar">
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="sidebar">
 
-                <a href="#" class="logo sidebar-logo">DAMFLIX</a>
+            <a href="#" class="logo sidebar-logo">DAMFLIX</a>
 
-                <nav class="sidebar-nav">
+            <nav class="sidebar-nav">
 
-                    <button class="sidebar-link" data-view="dashboard">
-                        <span class="sidebar-icon">🏠</span> Dashboard
+                <button class="sidebar-link" data-view="dashboard">
+                    <span class="sidebar-icon">🏠</span> Dashboard
+                </button>
+
+                <button class="sidebar-link active" data-view="biblioteca">
+                    <span class="sidebar-icon">📚</span> Biblioteca
+                </button>
+
+                <button class="sidebar-link" data-view="horario">
+                    <span class="sidebar-icon">🕐</span> Horario
+                </button>
+
+                <button class="sidebar-link" data-view="calendario">
+                    <span class="sidebar-icon">📅</span> Calendario
+                </button>
+
+                <button class="sidebar-link" data-view="tareas">
+                    <span class="sidebar-icon">✅</span> Tareas
+                </button>
+
+                <button class="sidebar-link" data-view="favoritos">
+                    <span class="sidebar-icon">⭐</span> Favoritos
+                </button>
+
+                <button class="sidebar-link" data-view="perfil">
+                    <span class="sidebar-icon">👤</span> Perfil
+                </button>
+
+            </nav>
+
+        </aside>
+
+
+        <div class="app-main">
+
+            <!-- CABECERA -->
+            <header>
+
+                <button id="sidebarToggle" class="sidebar-toggle" aria-label="Abrir menú">☰</button>
+
+                <div class="header-spacer"></div>
+
+                <button id="openUpload">
+                    + Subir archivo
+                </button>
+
+                <div class="user-menu">
+
+                    <button id="userMenuButton" class="user-menu-button">
+                        <span id="userInitial">?</span>
                     </button>
 
-                    <button class="sidebar-link active" data-view="biblioteca">
-                        <span class="sidebar-icon">📚</span> Biblioteca
-                    </button>
+                    <div id="userMenuDropdown" class="user-menu-dropdown">
 
-                    <button class="sidebar-link" data-view="horario">
-                        <span class="sidebar-icon">🕐</span> Horario
-                    </button>
+                        <div class="user-menu-name" id="userMenuName"></div>
+                        <div class="user-menu-email" id="userMenuEmail"></div>
 
-                    <button class="sidebar-link" data-view="calendario">
-                        <span class="sidebar-icon">📅</span> Calendario
-                    </button>
+                        <label class="user-menu-label" for="userMenuDisplayName">Nombre visible</label>
+                        <input type="text" id="userMenuDisplayName" class="user-menu-input">
+                        <button type="button" id="saveDisplayName" class="user-menu-save">Guardar nombre</button>
 
-                    <button class="sidebar-link" data-view="tareas">
-                        <span class="sidebar-icon">✅</span> Tareas
-                    </button>
+                        <button type="button" id="logoutButton" class="user-menu-logout">Cerrar sesión</button>
 
-                    <button class="sidebar-link" data-view="favoritos">
-                        <span class="sidebar-icon">⭐</span> Favoritos
-                    </button>
+                    </div>
 
-                    <button class="sidebar-link" data-view="perfil">
-                        <span class="sidebar-icon">👤</span> Perfil
-                    </button>
+                </div>
 
-                </nav>
-
-            </aside>
+            </header>
 
 
-            <div class="app-main">
+            <main>
 
-                <!-- CABECERA -->
-                <header>
+                <!-- DASHBOARD -->
+                <section id="view-dashboard" class="view">
 
-                    <button id="sidebarToggle" class="sidebar-toggle" aria-label="Abrir menú">☰</button>
+                    <div class="section-header">
+                        <h1>Dashboard</h1>
+                    </div>
 
-                    <div class="header-spacer"></div>
+                    <div class="dashboard-stats" id="dashboardStats"></div>
 
-                    <button id="openUpload">
-                        + Subir archivo
-                    </button>
+                    <div class="dashboard-grid">
 
-                    <div class="user-menu">
+                        <div class="dashboard-card">
+                            <h3>📌 Próximas tareas</h3>
+                            <div id="dashboardTasks" class="dashboard-list"></div>
+                        </div>
 
-                        <button id="userMenuButton" class="user-menu-button">
-                            <span id="userInitial">?</span>
-                        </button>
+                        <div class="dashboard-card">
+                            <h3>📅 Próximos eventos</h3>
+                            <div id="dashboardEvents" class="dashboard-list"></div>
+                        </div>
 
-                        <div id="userMenuDropdown" class="user-menu-dropdown">
+                        <div class="dashboard-card">
+                            <h3>🕐 Horario de hoy</h3>
+                            <div id="dashboardToday" class="dashboard-list"></div>
+                        </div>
 
-                            <div class="user-menu-name" id="userMenuName"></div>
-                            <div class="user-menu-email" id="userMenuEmail"></div>
+                        <div class="dashboard-card">
+                            <h3>📂 Archivos recientes</h3>
+                            <div id="dashboardFiles" class="dashboard-list"></div>
+                        </div>
 
-                            <label class="user-menu-label" for="userMenuDisplayName">Nombre visible</label>
-                            <input type="text" id="userMenuDisplayName" class="user-menu-input">
-                            <button type="button" id="saveDisplayName" class="user-menu-save">Guardar nombre</button>
-
-                            <button type="button" id="logoutButton" class="user-menu-logout">Cerrar sesión</button>
-
+                        <div class="dashboard-card">
+                            <h3>⭐ Favoritos</h3>
+                            <div id="dashboardFavorites" class="dashboard-list"></div>
                         </div>
 
                     </div>
 
-                </header>
+                </section>
 
 
-                <main>
+                <!-- BIBLIOTECA -->
+                <section id="view-biblioteca" class="view active">
 
-                    <!-- DASHBOARD -->
-                    <section id="view-dashboard" class="view">
+                    <!-- PESTAÑAS: MI CONTENIDO / COMPARTIDO CONMIGO -->
+                    <div class="scope-tabs">
+
+                        <button class="scope-tab active" data-scope="mine">
+                            Mi contenido
+                        </button>
+
+                        <button class="scope-tab" data-scope="shared">
+                            Compartido conmigo
+                        </button>
+
+                    </div>
+
+                    <!-- MÓDULOS -->
+                    <section id="modulos">
 
                         <div class="section-header">
-                            <h1>Dashboard</h1>
-                        </div>
 
-                        <div class="dashboard-stats" id="dashboardStats"></div>
+                            <h1>Módulos</h1>
 
-                        <div class="dashboard-grid">
-
-                            <div class="dashboard-card">
-                                <h3>📌 Próximas tareas</h3>
-                                <div id="dashboardTasks" class="dashboard-list"></div>
-                            </div>
-
-                            <div class="dashboard-card">
-                                <h3>📅 Próximos eventos</h3>
-                                <div id="dashboardEvents" class="dashboard-list"></div>
-                            </div>
-
-                            <div class="dashboard-card">
-                                <h3>🕐 Horario de hoy</h3>
-                                <div id="dashboardToday" class="dashboard-list"></div>
-                            </div>
-
-                            <div class="dashboard-card">
-                                <h3>📂 Archivos recientes</h3>
-                                <div id="dashboardFiles" class="dashboard-list"></div>
-                            </div>
-
-                            <div class="dashboard-card">
-                                <h3>⭐ Favoritos</h3>
-                                <div id="dashboardFavorites" class="dashboard-list"></div>
-                            </div>
+                            <select id="moduleFilter">
+                                <option value="">Todas las asignaturas</option>
+                            </select>
 
                         </div>
+
+                        <div id="moduleRow" class="module-row"></div>
 
                     </section>
 
 
                     <!-- BIBLIOTECA -->
-                    <section id="view-biblioteca" class="view active">
-
-                        <!-- PESTAÑAS: MI CONTENIDO / COMPARTIDO CONMIGO -->
-                        <div class="scope-tabs">
-
-                            <button class="scope-tab active" data-scope="mine">
-                                Mi contenido
-                            </button>
-
-                            <button class="scope-tab" data-scope="shared">
-                                Compartido conmigo
-                            </button>
-
-                        </div>
-
-                        <!-- MÓDULOS -->
-                        <section id="modulos">
-
-                            <div class="section-header">
-
-                                <h1>Módulos</h1>
-
-                                <select id="moduleFilter">
-                                    <option value="">Todas las asignaturas</option>
-                                </select>
-
-                            </div>
-
-                            <div id="moduleRow" class="module-row"></div>
-
-                        </section>
-
-
-                        <!-- BIBLIOTECA -->
-                        <section id="biblioteca">
-
-                            <div class="section-header">
-
-                                <div>
-                                    <h2>Mi biblioteca</h2>
-
-                                    <p id="librarySubtitle">
-                                        Todos tus documentos
-                                    </p>
-                                </div>
-
-                                <input type="text" id="searchInput" placeholder="Buscar apuntes, tema, módulo...">
-
-                            </div>
-
-
-                            <!-- FILTROS -->
-                            <div class="filters">
-
-                                <button class="filter active" data-filter="all">
-                                    Todos
-                                </button>
-
-                                <button class="filter" data-filter="favorite">
-                                    ★ Favoritos
-                                </button>
-
-                                <button class="filter" data-filter="pending">
-                                    Pendientes
-                                </button>
-
-                                <button class="filter" data-filter="completed">
-                                    Completados
-                                </button>
-
-                            </div>
-
-
-                            <!-- DOCUMENTOS -->
-                            <div id="documentGrid" class="document-grid"></div>
-
-                        </section>
-
-                    </section>
-
-
-                    <!-- HORARIO -->
-                    <section id="view-horario" class="view">
+                    <section id="biblioteca">
 
                         <div class="section-header">
-                            <h1>Mi horario</h1>
-
-                            <button type="button" id="openAddClass" class="upload-button schedule-add-button">
-                                + Añadir clase
-                            </button>
-                        </div>
-
-                        <div id="scheduleGrid" class="schedule-grid">
-                            <div class="empty">Cargando horario...</div>
-                        </div>
-
-                    </section>
-
-
-                    <!-- CALENDARIO -->
-                    <section id="view-calendario" class="view">
-
-                        <div class="section-header">
-                            <h1>Calendario</h1>
-
-                            <button type="button" id="openAddEvent" class="upload-button schedule-add-button">
-                                + Añadir evento
-                            </button>
-                        </div>
-
-                        <div class="maintenance-message">
-                            <strong>CALENDARIO EN MANTENIMIENTO</strong>
-                            <span>Estamos trabajando en esta sección. Estará disponible próximamente.</span>
-                        </div>
-
-                        <div class="calendar-nav">
-                            <button type="button" id="calendarPrev" class="calendar-nav-button">‹</button>
-                            <span id="calendarLabel" class="calendar-label"></span>
-                            <button type="button" id="calendarNext" class="calendar-nav-button">›</button>
-                        </div>
-
-                        <div id="calendarGrid" class="calendar-grid"></div>
-
-                        <div class="section-header calendar-upcoming-header">
-                            <h2>Próximos eventos</h2>
-                        </div>
-
-                        <div id="upcomingEvents" class="dashboard-list"></div>
-
-                    </section>
-
-
-                    <!-- TAREAS -->
-                    <section id="view-tareas" class="view">
-
-                        <div class="section-header">
-                            <h1>Tareas</h1>
-
-                            <button type="button" id="openAddTask" class="upload-button schedule-add-button">
-                                + Añadir tarea
-                            </button>
-                        </div>
-
-                        <div id="taskList" class="task-list">
-                            <div class="empty">Cargando tareas...</div>
-                        </div>
-
-                    </section>
-
-
-                    <!-- FAVORITOS -->
-                    <section id="view-favoritos" class="view">
-
-                        <div class="section-header">
-                            <h1>Favoritos</h1>
-                        </div>
-
-                        <div id="favoritesGrid" class="favorites-grid"></div>
-
-                    </section>
-
-
-                    <!-- PERFIL -->
-                    <section id="view-perfil" class="view">
-
-                        <div class="section-header">
-                            <h1>Perfil</h1>
-                        </div>
-
-                        <div class="profile-box">
-
-                            <div class="profile-avatar" id="profileAvatar">?</div>
 
                             <div>
-                                <div class="profile-name" id="profileName"></div>
-                                <div class="profile-email" id="profileEmail"></div>
+                                <h2>Mi biblioteca</h2>
+
+                                <p id="librarySubtitle">
+                                    Todos tus documentos
+                                </p>
                             </div>
+
+                            <input
+                                type="text"
+                                id="searchInput"
+                                placeholder="Buscar apuntes, tema, módulo..."
+                            >
 
                         </div>
 
-                        <div class="dashboard-stats" id="profileStats"></div>
+
+                        <!-- FILTROS -->
+                        <div class="filters">
+
+                            <button
+                                class="filter active"
+                                data-filter="all"
+                            >
+                                Todos
+                            </button>
+
+                            <button
+                                class="filter"
+                                data-filter="favorite"
+                            >
+                                ★ Favoritos
+                            </button>
+
+                            <button
+                                class="filter"
+                                data-filter="pending"
+                            >
+                                Pendientes
+                            </button>
+
+                            <button
+                                class="filter"
+                                data-filter="completed"
+                            >
+                                Completados
+                            </button>
+
+                        </div>
+
+
+                        <!-- DOCUMENTOS -->
+                        <div
+                            id="documentGrid"
+                            class="document-grid"
+                        ></div>
 
                     </section>
 
-                </main>
+                </section>
 
 
-                <footer>
-                    DAMFLIX · Tu biblioteca de 1º DAM
-                </footer>
+                <!-- HORARIO -->
+                <section id="view-horario" class="view">
 
-            </div> <!-- /.app-main -->
+                    <div class="section-header">
+                        <h1>Mi horario</h1>
 
-        </div> <!-- /.app-shell -->
+                        <button type="button" id="openAddClass" class="upload-button schedule-add-button">
+                            + Añadir clase
+                        </button>
+                    </div>
 
+                    <div id="scheduleGrid" class="schedule-grid">
+                        <div class="empty">Cargando horario...</div>
+                    </div>
 
-        <!-- MODAL COMPARTIR -->
-        <div id="shareModal" class="modal">
-
-            <div class="modal-content">
-
-                <button type="button" id="closeShare" class="close">×</button>
-
-                <h2>Compartir</h2>
-
-                <p class="modal-description" id="shareTargetLabel">
-                    Elige con quién quieres compartir este contenido.
-                </p>
-
-                <div id="shareScopeChoice" class="share-scope-choice"></div>
-
-                <form id="shareForm">
-
-                    <label for="shareEmail">Email del usuario</label>
-
-                    <input type="email" id="shareEmail" placeholder="compañero@ejemplo.com" required>
-
-                    <label for="sharePermission">Permiso</label>
-
-                    <select id="sharePermission">
-                        <option value="lector">Lector (ver y descargar)</option>
-                        <option value="editor">Editor (ver, descargar, subir y modificar)</option>
-                    </select>
-
-                    <div id="shareStatus" class="auth-status"></div>
-
-                    <button type="submit" class="upload-button">
-                        Compartir
-                    </button>
-
-                </form>
-
-                <div id="shareList" class="share-list"></div>
-
-            </div>
-
-        </div>
+                </section>
 
 
-        <!-- MODAL SUBIR ARCHIVO -->
-        <div id="uploadModal" class="modal">
+                <!-- CALENDARIO -->
+                <section id="view-calendario" class="view">
 
-            <div class="modal-content">
+                    <div class="section-header">
+                        <h1>Calendario</h1>
 
-                <button type="button" id="closeUpload" class="close">
-                    ×
+                        <button type="button" id="openAddEvent" class="upload-button schedule-add-button">
+                            + Añadir evento
+                        </button>
+                    </div>
+
+                    <div class="calendar-nav">
+                        <button type="button" id="calendarPrev" class="calendar-nav-button">‹</button>
+                        <span id="calendarLabel" class="calendar-label"></span>
+                        <button type="button" id="calendarNext" class="calendar-nav-button">›</button>
+                    </div>
+
+                    <div class="calendar-legend">
+                        <span><span class="legend-dot chip-academico"></span> 📚 Académico</span>
+                        <span><span class="legend-dot chip-examen"></span> 📝 Examen/evaluación</span>
+                        <span><span class="legend-dot chip-vacaciones"></span> 🏖️ Vacaciones</span>
+                        <span><span class="legend-dot chip-festivo"></span> 🎉 Festivo</span>
+                        <span><span class="legend-dot chip-personal"></span> 👤 Personal</span>
+                    </div>
+
+                    <div id="calendarGrid" class="calendar-grid"></div>
+
+                    <div class="section-header calendar-upcoming-header">
+                        <h2>Próximos eventos</h2>
+                    </div>
+
+                    <div id="upcomingEvents" class="dashboard-list"></div>
+
+                </section>
+
+
+                <!-- TAREAS -->
+                <section id="view-tareas" class="view">
+
+                    <div class="section-header">
+                        <h1>Tareas</h1>
+
+                        <button type="button" id="openAddTask" class="upload-button schedule-add-button">
+                            + Añadir tarea
+                        </button>
+                    </div>
+
+                    <div id="taskList" class="task-list">
+                        <div class="empty">Cargando tareas...</div>
+                    </div>
+
+                </section>
+
+
+                <!-- FAVORITOS -->
+                <section id="view-favoritos" class="view">
+
+                    <div class="section-header">
+                        <h1>Favoritos</h1>
+                    </div>
+
+                    <div id="favoritesGrid" class="favorites-grid"></div>
+
+                </section>
+
+
+                <!-- PERFIL -->
+                <section id="view-perfil" class="view">
+
+                    <div class="section-header">
+                        <h1>Perfil</h1>
+                    </div>
+
+                    <div class="profile-box">
+
+                        <div class="profile-avatar" id="profileAvatar">?</div>
+
+                        <div>
+                            <div class="profile-name" id="profileName"></div>
+                            <div class="profile-email" id="profileEmail"></div>
+                        </div>
+
+                    </div>
+
+                    <div class="dashboard-stats" id="profileStats"></div>
+
+                </section>
+
+            </main>
+
+
+            <footer>
+                DAMFLIX · Tu biblioteca de 1º DAM
+            </footer>
+
+        </div> <!-- /.app-main -->
+
+    </div> <!-- /.app-shell -->
+
+
+    <!-- MODAL COMPARTIR -->
+    <div id="shareModal" class="modal">
+
+        <div class="modal-content">
+
+            <button type="button" id="closeShare" class="close">×</button>
+
+            <h2>Compartir</h2>
+
+            <p class="modal-description" id="shareTargetLabel">
+                Elige con quién quieres compartir este contenido.
+            </p>
+
+            <div id="shareScopeChoice" class="share-scope-choice"></div>
+
+            <form id="shareForm">
+
+                <label for="shareEmail">Email del usuario</label>
+
+                <input
+                    type="email"
+                    id="shareEmail"
+                    placeholder="compañero@ejemplo.com"
+                    required
+                >
+
+                <label for="sharePermission">Permiso</label>
+
+                <select id="sharePermission">
+                    <option value="lector">Lector (ver y descargar)</option>
+                    <option value="editor">Editor (ver, descargar, subir y modificar)</option>
+                </select>
+
+                <div id="shareStatus" class="auth-status"></div>
+
+                <button type="submit" class="upload-button">
+                    Compartir
                 </button>
 
+            </form>
 
-                <h2>Subir documento</h2>
+            <div id="shareList" class="share-list"></div>
 
-                <p class="modal-description">
-                    Organiza tu archivo por módulo y tema.
-                </p>
+        </div>
 
-
-                <form id="uploadForm">
-
-                    <label for="uploadModule">
-                        Módulo
-                    </label>
-
-                    <select id="uploadModule" required>
-                        <option value="">
-                            Selecciona un módulo
-                        </option>
-                    </select>
+    </div>
 
 
-                    <label for="topic">
-                        Tema
-                    </label>
+    <!-- MODAL SUBIR ARCHIVO -->
+    <div id="uploadModal" class="modal">
 
-                    <input type="text" id="topic" placeholder="Ej: Tema 1" required>
+        <div class="modal-content">
 
-
-                    <label for="type">
-                        Tipo
-                    </label>
-
-                    <select id="type" required>
-
-                        <option value="Apuntes">
-                            Apuntes
-                        </option>
-
-                        <option value="Ejercicios">
-                            Ejercicios
-                        </option>
-
-                        <option value="Práctica">
-                            Práctica
-                        </option>
-
-                        <option value="Examen">
-                            Examen
-                        </option>
-
-                        <option value="Trabajo">
-                            Trabajo
-                        </option>
-
-                        <option value="Proyecto">
-                            Proyecto
-                        </option>
-
-                        <option value="Otro">
-                            Otro
-                        </option>
-
-                    </select>
+            <button
+                type="button"
+                id="closeUpload"
+                class="close"
+            >
+                ×
+            </button>
 
 
-                    <label>
-                        Archivos
-                    </label>
+            <h2>Subir documento</h2>
 
-                    <!-- ZONA DE ARRASTRAR Y SOLTAR -->
-                    <div id="dropZone" class="drop-zone">
-
-                        <div class="drop-zone-icon">⬆️</div>
-
-                        <p>
-                            Arrastra tus archivos aquí
-                            <br>
-                            o haz clic para elegirlos
-                        </p>
-
-                        <p class="drop-zone-help">
-                            Puedes soltar varios a la vez. El título
-                            de cada uno se toma del nombre del archivo
-                            (lo puedes editar abajo).
-                        </p>
-
-                        <!-- SIN ACCEPT = CUALQUIER ARCHIVO -->
-                        <input type="file" id="file" multiple hidden>
-
-                    </div>
-
-                    <div id="fileList" class="file-list"></div>
+            <p class="modal-description">
+                Organiza tu archivo por módulo y tema.
+            </p>
 
 
-                    <div id="uploadStatus"></div>
+            <form id="uploadForm">
+
+                <label for="uploadModule">
+                    Módulo
+                </label>
+
+                <select
+                    id="uploadModule"
+                    required
+                >
+                    <option value="">
+                        Selecciona un módulo
+                    </option>
+                </select>
 
 
-                    <button type="submit" id="uploadButton" class="upload-button">
-                        Subir a DAMFLIX
+                <label for="topic">
+                    Tema
+                </label>
+
+                <input
+                    type="text"
+                    id="topic"
+                    placeholder="Ej: Tema 1"
+                    required
+                >
+
+
+                <label for="type">
+                    Tipo
+                </label>
+
+                <select id="type" required>
+
+                    <option value="Apuntes">
+                        Apuntes
+                    </option>
+
+                    <option value="Ejercicios">
+                        Ejercicios
+                    </option>
+
+                    <option value="Práctica">
+                        Práctica
+                    </option>
+
+                    <option value="Examen">
+                        Examen
+                    </option>
+
+                    <option value="Trabajo">
+                        Trabajo
+                    </option>
+
+                    <option value="Proyecto">
+                        Proyecto
+                    </option>
+
+                    <option value="Otro">
+                        Otro
+                    </option>
+
+                </select>
+
+
+                <label>
+                    Archivos
+                </label>
+
+                <!-- ZONA DE ARRASTRAR Y SOLTAR -->
+                <div id="dropZone" class="drop-zone">
+
+                    <div class="drop-zone-icon">⬆️</div>
+
+                    <p>
+                        Arrastra tus archivos aquí
+                        <br>
+                        o haz clic para elegirlos
+                    </p>
+
+                    <p class="drop-zone-help">
+                        Puedes soltar varios a la vez. El título
+                        de cada uno se toma del nombre del archivo
+                        (lo puedes editar abajo).
+                    </p>
+
+                    <!-- SIN ACCEPT = CUALQUIER ARCHIVO -->
+                    <input
+                        type="file"
+                        id="file"
+                        multiple
+                        hidden
+                    >
+
+                </div>
+
+                <div id="fileList" class="file-list"></div>
+
+
+                <div id="uploadStatus"></div>
+
+
+                <button
+                    type="submit"
+                    id="uploadButton"
+                    class="upload-button"
+                >
+                    Subir a DAMFLIX
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- MODAL CLASE (HORARIO) -->
+    <div id="classModal" class="modal">
+
+        <div class="modal-content">
+
+            <button type="button" id="closeClassModal" class="close">×</button>
+
+            <h2 id="classModalTitle">Añadir clase</h2>
+
+            <p class="modal-description">
+                Se guarda solo en tu horario.
+            </p>
+
+            <form id="scheduleForm" class="modal-form">
+
+                <input type="hidden" id="classId">
+
+                <label for="classDay">Día</label>
+                <select id="classDay" required>
+                    <option value="1">Lunes</option>
+                    <option value="2">Martes</option>
+                    <option value="3">Miércoles</option>
+                    <option value="4">Jueves</option>
+                    <option value="5">Viernes</option>
+                </select>
+
+                <label for="classStart">Hora inicio</label>
+                <input type="time" id="classStart" required>
+
+                <label for="classEnd">Hora fin</label>
+                <input type="time" id="classEnd" required>
+
+                <label for="classSubject">Asignatura</label>
+                <input type="text" id="classSubject" placeholder="Ej: PROGR" required>
+
+                <label for="classTeacher">Profesor</label>
+                <input type="text" id="classTeacher" placeholder="Ej: Luis Manuel Vázquez Venegas">
+
+                <label for="classNotes">Notas (opcional)</label>
+                <input type="text" id="classNotes" placeholder="Ej: + tutoría">
+
+                <div id="classStatus" class="auth-status"></div>
+
+                <div class="schedule-form-actions">
+
+                    <button type="button" id="deleteClassButton" class="schedule-delete-button hidden">
+                        Eliminar clase
                     </button>
 
-                </form>
-
-            </div>
-
-        </div>
-
-
-        <!-- MODAL CLASE (HORARIO) -->
-        <div id="classModal" class="modal">
-
-            <div class="modal-content">
-
-                <button type="button" id="closeClassModal" class="close">×</button>
-
-                <h2 id="classModalTitle">Añadir clase</h2>
-
-                <p class="modal-description">
-                    Se guarda solo en tu horario.
-                </p>
-
-                <form id="scheduleForm" class="modal-form">
-
-                    <input type="hidden" id="classId">
-
-                    <label for="classDay">Día</label>
-                    <select id="classDay" required>
-                        <option value="1">Lunes</option>
-                        <option value="2">Martes</option>
-                        <option value="3">Miércoles</option>
-                        <option value="4">Jueves</option>
-                        <option value="5">Viernes</option>
-                    </select>
-
-                    <label for="classStart">Hora inicio</label>
-                    <input type="time" id="classStart" required>
-
-                    <label for="classEnd">Hora fin</label>
-                    <input type="time" id="classEnd" required>
-
-                    <label for="classSubject">Asignatura</label>
-                    <input type="text" id="classSubject" placeholder="Ej: PROGR" required>
-
-                    <label for="classTeacher">Profesor</label>
-                    <input type="text" id="classTeacher" placeholder="Ej: Luis Manuel Vázquez Venegas">
-
-                    <label for="classNotes">Notas (opcional)</label>
-                    <input type="text" id="classNotes" placeholder="Ej: + tutoría">
-
-                    <div id="classStatus" class="auth-status"></div>
-
-                    <div class="schedule-form-actions">
-
-                        <button type="button" id="deleteClassButton" class="schedule-delete-button hidden">
-                            Eliminar clase
-                        </button>
-
-                        <button type="submit" class="upload-button">
-                            Guardar
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </div>
-
-
-        <!-- MODAL TAREA -->
-        <div id="taskModal" class="modal">
-
-            <div class="modal-content">
-
-                <button type="button" id="closeTaskModal" class="close">×</button>
-
-                <h2 id="taskModalTitle">Añadir tarea</h2>
-
-                <form id="taskForm" class="modal-form">
-
-                    <input type="hidden" id="taskId">
-
-                    <label for="taskTitle">Título</label>
-                    <input type="text" id="taskTitle" placeholder="Ej: Entregar práctica UD3" required>
-
-                    <label for="taskSubject">Asignatura (opcional)</label>
-                    <input type="text" id="taskSubject" placeholder="Ej: PROGR">
-
-                    <label for="taskDue">Fecha límite (opcional)</label>
-                    <input type="date" id="taskDue">
-
-                    <label for="taskPriority">Prioridad</label>
-                    <select id="taskPriority">
-                        <option value="baja">Baja</option>
-                        <option value="media" selected>Media</option>
-                        <option value="alta">Alta</option>
-                    </select>
-
-                    <label class="task-completed-label">
-                        <input type="checkbox" id="taskCompleted">
-                        Completada
-                    </label>
-
-                    <div id="taskStatus" class="auth-status"></div>
-
-                    <div class="schedule-form-actions">
-
-                        <button type="button" id="deleteTaskButton" class="schedule-delete-button hidden">
-                            Eliminar tarea
-                        </button>
-
-                        <button type="submit" class="upload-button">
-                            Guardar
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </div>
-
-
-        <!-- MODAL EVENTO -->
-        <div id="eventModal" class="modal">
-
-            <div class="modal-content">
-
-                <button type="button" id="closeEventModal" class="close">×</button>
-
-                <h2 id="eventModalTitle">Añadir evento</h2>
-
-                <form id="eventForm" class="modal-form">
-
-                    <input type="hidden" id="eventId">
-
-                    <label for="eventTitle">Título</label>
-                    <input type="text" id="eventTitle" placeholder="Ej: Examen de BADAT" required>
-
-                    <label for="eventType">Tipo</label>
-                    <select id="eventType">
-                        <option value="examen">Examen</option>
-                        <option value="entrega">Entrega</option>
-                        <option value="tarea">Tarea</option>
-                        <option value="otro" selected>Otro</option>
-                    </select>
-
-                    <label for="eventStart">Fecha y hora de inicio</label>
-                    <input type="datetime-local" id="eventStart" required>
-
-                    <label for="eventEnd">Fecha y hora de fin (opcional)</label>
-                    <input type="datetime-local" id="eventEnd">
-
-                    <label for="eventDescription">Descripción (opcional)</label>
-                    <input type="text" id="eventDescription" placeholder="Detalles del evento">
-
-                    <div id="eventStatus" class="auth-status"></div>
-
-                    <div class="schedule-form-actions">
-
-                        <button type="button" id="deleteEventButton" class="schedule-delete-button hidden">
-                            Eliminar evento
-                        </button>
-
-                        <button type="submit" class="upload-button">
-                            Guardar
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </div>
-
-
-        <!-- VISOR DE ARCHIVOS (HTML, PDF, IMÁGENES) -->
-        <div id="htmlViewer" class="html-viewer">
-
-            <div class="html-viewer-bar">
-
-                <span id="htmlViewerTitle" class="html-viewer-title"></span>
-
-                <div class="html-viewer-actions">
-
-                    <button type="button" id="htmlViewerNewTab">
-                        Abrir en pestaña nueva
-                    </button>
-
-                    <button type="button" id="closeHtmlViewer">
-                        ✕ Cerrar
+                    <button type="submit" class="upload-button">
+                        Guardar
                     </button>
 
                 </div>
 
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- MODAL TAREA -->
+    <div id="taskModal" class="modal">
+
+        <div class="modal-content">
+
+            <button type="button" id="closeTaskModal" class="close">×</button>
+
+            <h2 id="taskModalTitle">Añadir tarea</h2>
+
+            <form id="taskForm" class="modal-form">
+
+                <input type="hidden" id="taskId">
+
+                <label for="taskTitle">Título</label>
+                <input type="text" id="taskTitle" placeholder="Ej: Entregar práctica UD3" required>
+
+                <label for="taskSubject">Asignatura (opcional)</label>
+                <input type="text" id="taskSubject" placeholder="Ej: PROGR">
+
+                <label for="taskDue">Fecha límite (opcional)</label>
+                <input type="date" id="taskDue">
+
+                <label for="taskPriority">Prioridad</label>
+                <select id="taskPriority">
+                    <option value="baja">Baja</option>
+                    <option value="media" selected>Media</option>
+                    <option value="alta">Alta</option>
+                </select>
+
+                <label class="task-completed-label">
+                    <input type="checkbox" id="taskCompleted">
+                    Completada
+                </label>
+
+                <div id="taskStatus" class="auth-status"></div>
+
+                <div class="schedule-form-actions">
+
+                    <button type="button" id="deleteTaskButton" class="schedule-delete-button hidden">
+                        Eliminar tarea
+                    </button>
+
+                    <button type="submit" class="upload-button">
+                        Guardar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- MODAL EVENTO -->
+    <div id="eventModal" class="modal">
+
+        <div class="modal-content">
+
+            <button type="button" id="closeEventModal" class="close">×</button>
+
+            <h2 id="eventModalTitle">Añadir evento</h2>
+
+            <div id="eventOfficialBadge" class="official-badge hidden">
+                🔒 Evento oficial del centro (1º DAM) — no editable
             </div>
 
-            <div id="htmlViewerBody" class="html-viewer-body">
+            <form id="eventForm" class="modal-form">
 
-                <!-- sandbox sin allow-same-origin: el HTML subido queda aislado de tu web -->
-                <iframe id="htmlViewerFrame" class="html-viewer-frame"></iframe>
+                <input type="hidden" id="eventId">
 
-                <img id="htmlViewerImage" class="html-viewer-image">
+                <label for="eventTitle">Título</label>
+                <input type="text" id="eventTitle" placeholder="Ej: Examen de BADAT" required>
+
+                <label for="eventStart">Fecha y hora de inicio</label>
+                <input type="datetime-local" id="eventStart" required>
+
+                <label for="eventEnd">Fecha y hora de fin (opcional)</label>
+                <input type="datetime-local" id="eventEnd">
+
+                <label for="eventDescription">Descripción (opcional)</label>
+                <input type="text" id="eventDescription" placeholder="Detalles del evento">
+
+                <div id="eventStatus" class="auth-status"></div>
+
+                <div id="eventFormActions" class="schedule-form-actions">
+
+                    <button type="button" id="deleteEventButton" class="schedule-delete-button hidden">
+                        Eliminar evento
+                    </button>
+
+                    <button type="submit" id="saveEventButton" class="upload-button">
+                        Guardar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- VISOR DE ARCHIVOS (HTML, PDF, IMÁGENES) -->
+    <div id="htmlViewer" class="html-viewer">
+
+        <div class="html-viewer-bar">
+
+            <span id="htmlViewerTitle" class="html-viewer-title"></span>
+
+            <div class="html-viewer-actions">
+
+                <button type="button" id="htmlViewerNewTab">
+                    Abrir en pestaña nueva
+                </button>
+
+                <button type="button" id="closeHtmlViewer">
+                    ✕ Cerrar
+                </button>
 
             </div>
 
         </div>
+
+        <div id="htmlViewerBody" class="html-viewer-body">
+
+            <!-- sandbox sin allow-same-origin: el HTML subido queda aislado de tu web -->
+            <iframe
+                id="htmlViewerFrame"
+                class="html-viewer-frame"
+            ></iframe>
+
+            <img id="htmlViewerImage" class="html-viewer-image">
+
+        </div>
+
+    </div>
 
 
     </div> <!-- /#app -->
