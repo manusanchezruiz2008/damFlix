@@ -55,6 +55,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     setupHtmlViewer();
 
+    setupProgressBridge();
+
     setupAuthEvents();
 
     try {
@@ -250,6 +252,7 @@ async function refreshEverything() {
     await loadSchedule();
     await loadTasks();
     await loadEvents();
+    await loadAllProgress();
 
     renderDashboard();
     renderFavoritesView();
@@ -1992,6 +1995,29 @@ function renderDashboard() {
                 ? '<div class="dashboard-empty">Aún no tienes favoritos.</div>'
                 : favs.map(function (f) {
                     return dashboardRow(f.title || f.name, f.module || "");
+                }).join("");
+
+    }
+
+    // Progreso por asignatura
+    const progressBox =
+        document.getElementById("dashboardProgress");
+
+    if (progressBox) {
+
+        const summary =
+            getModuleProgressSummary().filter(function (m) {
+                return m.total > 0;
+            });
+
+        progressBox.innerHTML =
+            summary.length === 0
+                ? '<div class="dashboard-empty">Todavía no hay progreso guardado.</div>'
+                : summary.map(function (m) {
+                    return dashboardRow(
+                        m.icon + " " + m.module,
+                        m.percent + "% (" + m.completed + "/" + m.total + ")"
+                    );
                 }).join("");
 
     }
@@ -4079,6 +4105,7 @@ async function openDocument(item) {
 
 let currentViewerUrl = null;
 let currentViewerIsBlob = false;
+let currentViewerItem = null; // documento abierto actualmente (para el progreso)
 
 function showViewer(title) {
 
@@ -4123,17 +4150,39 @@ function resetViewerContent() {
 
     currentViewerUrl = null;
     currentViewerIsBlob = false;
+    currentViewerItem = null;
 }
 
 // Hace que las rutas relativas (css, imágenes, js)
 // apunten a la carpeta del archivo en Supabase.
 function addBaseTag(html, fileUrl) {
 
+    // OJO: fileUrl es una signed URL de Supabase
+    // ("...?token=XXXX"). Antes se cortaba por el último "/" de
+    // toda la URL, lo que eliminaba "?token=..." del <base> y
+    // rompía cualquier recurso relativo (provocaba el error
+    // "querystring must have required property 'token'").
+    // Ahora separamos la query string primero y la conservamos.
+    const hashIndex =
+        fileUrl.indexOf("#");
+
+    const urlWithoutHash =
+        hashIndex === -1 ? fileUrl : fileUrl.substring(0, hashIndex);
+
+    const queryIndex =
+        urlWithoutHash.indexOf("?");
+
+    const pathPart =
+        queryIndex === -1 ? urlWithoutHash : urlWithoutHash.substring(0, queryIndex);
+
+    const queryPart =
+        queryIndex === -1 ? "" : urlWithoutHash.substring(queryIndex);
+
     const baseHref =
-        fileUrl.substring(
+        pathPart.substring(
             0,
-            fileUrl.lastIndexOf("/") + 1
-        );
+            pathPart.lastIndexOf("/") + 1
+        ) + queryPart;
 
     const baseTag =
         '<base href="' + baseHref + '">';
@@ -4157,6 +4206,8 @@ function addBaseTag(html, fileUrl) {
 async function openHtmlViewer(item, url) {
 
     resetViewerContent();
+
+    currentViewerItem = item;
 
     const frame =
         document.getElementById("htmlViewerFrame");
@@ -4195,8 +4246,26 @@ async function openHtmlViewer(item, url) {
         const html =
             await response.text();
 
+        // 1) CSS/JS/imágenes del mismo módulo y tema: se sustituyen
+        //    por su propia signed URL real (cada archivo necesita la
+        //    suya, un solo token no vale para varios archivos).
+        const withResources =
+            await rewriteEmbeddedResources(html, item);
+
+        // 2) <base> de respaldo para lo que no hayamos podido
+        //    resolver, ahora conservando el token.
+        const withBase =
+            addBaseTag(withResources, url);
+
+        // 3) Enlaces a otras páginas del mismo módulo/tema: en vez
+        //    de dejar que el iframe navegue directamente (pierde el
+        //    token igual que antes) interceptamos el clic y reabrimos
+        //    el documento correspondiente dentro de DAMFLIX.
+        // 4) Puente de progreso: expone window.damflixProgress dentro
+        //    del HTML para que cualquier página pueda guardar su
+        //    progreso en Supabase a través de DAMFLIX.
         const finalHtml =
-            addBaseTag(html, url);
+            injectDamflixBridge(withBase);
 
         currentViewerUrl =
             URL.createObjectURL(
@@ -4224,9 +4293,129 @@ async function openHtmlViewer(item, url) {
     }
 }
 
+// Busca, dentro del mismo módulo y tema que "item", un archivo de la
+// biblioteca cuyo nombre coincida con "refPath" (p. ej. "style.css",
+// "./js/app.js" o "modulo-02-bases-datos.html").
+function findSiblingFile(item, refPath) {
+
+    if (!refPath) {
+        return null;
+    }
+
+    const clean =
+        refPath.split("#")[0].split("?")[0];
+
+    const baseName =
+        clean.substring(clean.lastIndexOf("/") + 1).toLowerCase();
+
+    if (!baseName) {
+        return null;
+    }
+
+    return documentsList.find(function (d) {
+
+        return (
+            d.module === item.module &&
+            d.topic === item.topic &&
+            d.name &&
+            d.name.toLowerCase() === baseName
+        );
+
+    }) || null;
+
+}
+
+// Sustituye src="..."/href="..." de <link>, <script> e <img> por la
+// signed URL real del archivo hermano en DAMFLIX, cuando existe.
+async function rewriteEmbeddedResources(html, item) {
+
+    const tagPattern =
+        /<(link|script|img)\b([^>]*?)\b(src|href)=["']([^"':][^"']*)["']([^>]*)>/gi;
+
+    const matches =
+        [...html.matchAll(tagPattern)];
+
+    let result = html;
+
+    for (const match of matches) {
+
+        const [fullTag, tagName, before, attr, refPath, after] = match;
+
+        if (/^(https?:)?\/\//i.test(refPath) || refPath.startsWith("data:")) {
+            continue;
+        }
+
+        const sibling =
+            findSiblingFile(item, refPath);
+
+        if (!sibling) {
+            continue;
+        }
+
+        const signedUrl =
+            await getSignedUrl(sibling.path);
+
+        if (!signedUrl) {
+            continue;
+        }
+
+        const newTag =
+            "<" + tagName + before + attr + '="' + signedUrl + '"' + after + ">";
+
+        result =
+            result.replace(fullTag, newTag);
+
+    }
+
+    return result;
+
+}
+
+// Inyecta, justo antes de </body>, el puente que permite a CUALQUIER
+// HTML abierto en DAMFLIX: a) navegar a páginas hermanas sin perder
+// el token, y b) guardar/leer progreso en Supabase vía postMessage.
+function injectDamflixBridge(html) {
+
+    const bridge = '\n<script>(function(){' +
+        'var seq=0,pending={};' +
+        'window.addEventListener("message",function(e){' +
+        'var m=e.data;if(!m||m.source!=="damflix-parent")return;' +
+        'var cb=pending[m.id];if(cb){delete pending[m.id];cb(m);}' +
+        '});' +
+        'function call(action,payload){' +
+        'return new Promise(function(resolve){' +
+        'var id="dp"+(++seq);pending[id]=resolve;' +
+        'window.parent.postMessage({source:"damflix-child",id:id,action:action,payload:payload},"*");' +
+        '});}' +
+        'window.damflixProgress={' +
+        'save:function(itemKey,data){return call("save",{itemKey:itemKey,data:data});},' +
+        'complete:function(itemKey,data){return call("complete",{itemKey:itemKey,data:data});},' +
+        'uncomplete:function(itemKey){return call("uncomplete",{itemKey:itemKey});},' +
+        'isCompleted:function(itemKey){return call("isCompleted",{itemKey:itemKey});},' +
+        'getAll:function(){return call("getAll",{});}' +
+        '};' +
+        'document.addEventListener("click",function(ev){' +
+        'var a=ev.target.closest("a");if(!a)return;' +
+        'var href=a.getAttribute("href");' +
+        'if(!href||href.indexOf("#")===0||/^(https?:)?\/\//i.test(href)||href.indexOf("mailto:")===0)return;' +
+        'ev.preventDefault();' +
+        'window.parent.postMessage({source:"damflix-child",action:"navigate",payload:{href:href}},"*");' +
+        '},true);' +
+        '})();</script>\n';
+
+    if (html.indexOf("</body>") !== -1) {
+        return html.replace("</body>", bridge + "</body>");
+    }
+
+    return html + bridge;
+
+}
+
 function openPdfViewer(item, url) {
 
     resetViewerContent();
+
+    currentViewerItem = item;
 
     const frame =
         document.getElementById("htmlViewerFrame");
@@ -4256,6 +4445,8 @@ function openPdfViewer(item, url) {
 function openImageViewer(item, url) {
 
     resetViewerContent();
+
+    currentViewerItem = item;
 
     const image =
         document.getElementById("htmlViewerImage");
@@ -4287,6 +4478,234 @@ function closeHtmlViewer() {
     resetViewerContent();
 
     document.body.style.overflow = "";
+}
+
+// =========================================================
+// SISTEMA CENTRAL DE PROGRESO (tabla "progress" en Supabase)
+// =========================================================
+//
+// Cualquier HTML abierto en el visor de DAMFLIX recibe un objeto
+// window.damflixProgress (inyectado en injectDamflixBridge) que
+// habla con estas funciones mediante postMessage. Así, un HTML
+// nuevo que subas no tiene que montar nada propio: solo llamar a
+// damflixProgress.complete("ejercicio-3"), por ejemplo.
+//
+// El progreso se guarda agrupado por "módulo" (la asignatura del
+// archivo que está abierto) + "item_key" (lo decide cada HTML).
+
+async function progressUpsert(itemKey, completed, data) {
+
+    if (!currentViewerItem || !currentUser) {
+        return { error: "No hay ningún documento abierto." };
+    }
+
+    const { error } =
+        await supabaseClient
+            .from("progress")
+            .upsert(
+                {
+                    user_id: currentUser.id,
+                    module: currentViewerItem.module,
+                    item_key: String(itemKey),
+                    completed: completed,
+                    data: data || null,
+                    updated_at: new Date().toISOString()
+                },
+                { onConflict: "user_id,module,item_key" }
+            );
+
+    if (error) {
+        console.error("Error guardando progreso:", error);
+        return { error: error.message };
+    }
+
+    renderDashboard();
+
+    return { ok: true };
+
+}
+
+async function progressGetAllForCurrentModule() {
+
+    if (!currentViewerItem || !currentUser) {
+        return { error: "No hay ningún documento abierto.", items: [] };
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("progress")
+            .select("item_key, completed, data, updated_at")
+            .eq("user_id", currentUser.id)
+            .eq("module", currentViewerItem.module);
+
+    if (error) {
+        console.error("Error leyendo progreso:", error);
+        return { error: error.message, items: [] };
+    }
+
+    return { ok: true, items: data || [] };
+
+}
+
+async function progressIsCompleted(itemKey) {
+
+    if (!currentViewerItem || !currentUser) {
+        return { error: "No hay ningún documento abierto." };
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("progress")
+            .select("completed")
+            .eq("user_id", currentUser.id)
+            .eq("module", currentViewerItem.module)
+            .eq("item_key", String(itemKey))
+            .maybeSingle();
+
+    if (error) {
+        console.error("Error leyendo progreso:", error);
+        return { error: error.message };
+    }
+
+    return { ok: true, completed: !!(data && data.completed) };
+
+}
+
+// Progreso agregado de TODOS los módulos (lo usa el Dashboard).
+let moduleProgressCache = [];
+
+async function loadAllProgress() {
+
+    if (!supabaseClient || !currentUser) {
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("progress")
+            .select("module, completed")
+            .eq("user_id", currentUser.id);
+
+    if (error) {
+        console.error("Error leyendo el progreso general:", error);
+        return;
+    }
+
+    moduleProgressCache = data || [];
+
+    renderDashboard();
+
+}
+
+function getModuleProgressSummary() {
+
+    return modules.map(function (m) {
+
+        const rows =
+            moduleProgressCache.filter(function (p) {
+                return p.module === m.name;
+            });
+
+        const total = rows.length;
+
+        const completed =
+            rows.filter(function (p) { return p.completed; }).length;
+
+        const percent =
+            total === 0 ? 0 : Math.round((completed / total) * 100);
+
+        return {
+            module: m.name,
+            icon: m.icon,
+            total: total,
+            completed: completed,
+            percent: percent
+        };
+
+    });
+
+}
+
+// ---------------------------------------------
+// Puente con los HTML abiertos en el visor.
+// ---------------------------------------------
+
+function setupProgressBridge() {
+
+    window.addEventListener("message", async function (event) {
+
+        const msg = event.data;
+
+        if (!msg || msg.source !== "damflix-child") {
+            return;
+        }
+
+        // Navegar a otra página del mismo módulo/tema sin perder el token.
+        if (msg.action === "navigate") {
+
+            const sibling =
+                currentViewerItem
+                    ? findSiblingFile(currentViewerItem, msg.payload.href)
+                    : null;
+
+            if (sibling) {
+                openDocument(sibling);
+            } else {
+                alert('No se encontro "' + msg.payload.href + '" en tu biblioteca.');
+            }
+
+            return;
+
+        }
+
+        // Peticiones de progreso: todas responden al HTML que llamó.
+        let result = { error: "Acción no reconocida." };
+
+        if (msg.action === "save") {
+
+            result = await progressUpsert(
+                msg.payload.itemKey,
+                false,
+                msg.payload.data
+            );
+
+        } else if (msg.action === "complete") {
+
+            result = await progressUpsert(
+                msg.payload.itemKey,
+                true,
+                msg.payload.data
+            );
+
+        } else if (msg.action === "uncomplete") {
+
+            result = await progressUpsert(
+                msg.payload.itemKey,
+                false,
+                null
+            );
+
+        } else if (msg.action === "isCompleted") {
+
+            result = await progressIsCompleted(msg.payload.itemKey);
+
+        } else if (msg.action === "getAll") {
+
+            result = await progressGetAllForCurrentModule();
+
+        }
+
+        if (event.source) {
+
+            event.source.postMessage(
+                Object.assign({ source: "damflix-parent", id: msg.id }, result),
+                "*"
+            );
+
+        }
+
+    });
+
 }
 
 function setupHtmlViewer() {
