@@ -120,13 +120,15 @@
 
             <nav class="sidebar-nav">
 
-                <button class="sidebar-link" data-view="dashboard">
+                <button class="sidebar-link active" data-view="dashboard">
                     <span class="sidebar-icon">🏠</span> Dashboard
                 </button>
 
-                <button class="sidebar-link active" data-view="biblioteca">
-                    <span class="sidebar-icon">📚</span> Biblioteca
-                </button>
+                <div class="sidebar-section-label">📚 Asignaturas</div>
+
+                <div id="sidebarSubjects" class="sidebar-subjects"></div>
+
+                <div class="sidebar-divider"></div>
 
                 <button class="sidebar-link" data-view="horario">
                     <span class="sidebar-icon">🕐</span> Horario
@@ -193,7 +195,7 @@
             <main>
 
                 <!-- DASHBOARD -->
-                <section id="view-dashboard" class="view">
+                <section id="view-dashboard" class="view active">
 
                     <div class="section-header">
                         <h1>Dashboard</h1>
@@ -239,7 +241,14 @@
 
 
                 <!-- BIBLIOTECA -->
-                <section id="view-biblioteca" class="view active">
+                <section id="view-biblioteca" class="view">
+
+                    <!-- CABECERA DE LA ASIGNATURA ACTIVA (se elige en el menú lateral) -->
+                    <section id="modulos">
+
+                        <div id="subjectHeader" class="subject-header"></div>
+
+                    </section>
 
                     <!-- PESTAÑAS: MI CONTENIDO / COMPARTIDO CONMIGO -->
                     <div class="scope-tabs">
@@ -253,24 +262,6 @@
                         </button>
 
                     </div>
-
-                    <!-- MÓDULOS -->
-                    <section id="modulos">
-
-                        <div class="section-header">
-
-                            <h1>Módulos</h1>
-
-                            <select id="moduleFilter">
-                                <option value="">Todas las asignaturas</option>
-                            </select>
-
-                        </div>
-
-                        <div id="moduleRow" class="module-row"></div>
-
-                    </section>
-
 
                     <!-- BIBLIOTECA -->
                     <section id="biblioteca">
@@ -331,7 +322,7 @@
                         <!-- DOCUMENTOS -->
                         <div
                             id="documentGrid"
-                            class="document-grid"
+                            class="library-groups"
                         ></div>
 
                     </section>
@@ -522,35 +513,45 @@
             <h2>Subir documento</h2>
 
             <p class="modal-description">
-                Organiza tu archivo por módulo y tema.
+                Organiza tu archivo por asignatura y tema.
             </p>
 
 
             <form id="uploadForm">
 
-                <label for="uploadModule">
-                    Módulo
-                </label>
+                <div id="uploadModuleGroup">
 
-                <select
-                    id="uploadModule"
-                    required
-                >
-                    <option value="">
-                        Selecciona un módulo
-                    </option>
-                </select>
+                    <label for="uploadModule">
+                        Asignatura
+                    </label>
+
+                    <select
+                        id="uploadModule"
+                        required
+                    >
+                        <option value="">
+                            Selecciona una asignatura
+                        </option>
+                    </select>
+
+                </div>
+
+                <div id="uploadModuleFixed" class="upload-module-fixed hidden">
+                    Se guardará en: <strong></strong>
+                </div>
 
 
-                <label for="topic">
+                <label for="uploadTopicSelect">
                     Tema
                 </label>
+
+                <select id="uploadTopicSelect"></select>
 
                 <input
                     type="text"
                     id="topic"
-                    placeholder="Ej: Tema 1"
-                    required
+                    class="hidden"
+                    placeholder="Nombre del nuevo tema. Ej: Tema 4 - Arrays"
                 >
 
 

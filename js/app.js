@@ -5,35 +5,43 @@ const STORAGE_BUCKET = "files";
 const modules = [
     {
         name: "Programación",
-        icon: "💻"
+        icon: "💻",
+        short: "Programación"
     },
     {
         name: "Bases de Datos",
-        icon: "🗄️"
+        icon: "🗄️",
+        short: "Bases de Datos"
     },
     {
         name: "Entornos de Desarrollo",
-        icon: "🛠️"
+        icon: "🛠️",
+        short: "Entornos"
     },
     {
         name: "Sistemas Informáticos",
-        icon: "🖥️"
+        icon: "🖥️",
+        short: "Sistemas"
     },
     {
         name: "Lenguajes de Marcas",
-        icon: "🌐"
+        icon: "🌐",
+        short: "Lenguajes"
     },
     {
         name: "Digitalización",
-        icon: "🔢"
+        icon: "📱",
+        short: "Digitalización"
     },
     {
         name: "IPE I",
-        icon: "💼"
+        icon: "💼",
+        short: "IPE I"
     },
     {
         name: "Sostenibilidad",
-        icon: "♻️"
+        icon: "♻️",
+        short: "Sostenibilidad"
     }
 ];
 
@@ -169,6 +177,7 @@ async function onLogin(user) {
 
         createModules();
         setupEvents();
+        setupUploadSubjectControls();
         setupUserMenu();
         setupScopeTabs();
         setupShareModal();
@@ -595,6 +604,10 @@ function setupNavigation() {
 
             if (targetView) {
                 targetView.classList.add("active");
+            }
+
+            if (viewName === "biblioteca") {
+                selectModule(link.dataset.module || currentModule);
             }
 
             if (viewName === "horario") {
@@ -2523,118 +2536,129 @@ function setupShareModal() {
 
 function createModules() {
 
-    const moduleRow =
-        document.getElementById("moduleRow");
+    const nav = document.getElementById("sidebarSubjects");
+    const uploadModule = document.getElementById("uploadModule");
 
-    const moduleFilter =
-        document.getElementById("moduleFilter");
+    if (!nav || !uploadModule) {
+        console.error("No se encontraron los elementos de asignaturas.");
+        return;
+    }
 
-    const uploadModule =
-        document.getElementById("uploadModule");
+    nav.innerHTML = "";
 
-    if (!moduleRow || !moduleFilter || !uploadModule) {
+    // Una entrada del menú lateral por asignatura
+    modules.forEach(function (module) {
 
-        console.error(
-            "No se encontraron los elementos de módulos."
-        );
+        const link = document.createElement("button");
+
+        link.type = "button";
+        link.className = "sidebar-link subject-link";
+        link.dataset.view = "biblioteca";
+        link.dataset.module = module.name;
+        link.title = module.name;
+
+        link.innerHTML =
+            '<span class="sidebar-icon">' + module.icon + '</span>' +
+            '<span class="subject-link-name">' + escapeHTML(module.name) + '</span>' +
+            '<span class="subject-link-count">0</span>';
+
+        nav.appendChild(link);
+
+        const option = document.createElement("option");
+
+        option.value = module.name;
+        option.textContent = module.name;
+
+        uploadModule.appendChild(option);
+
+    });
+
+    // Entrada extra (oculta) para archivos antiguos cuyo "module" no es
+    // ninguna de las 8 asignaturas. Solo aparece si existen, para no perderlos.
+    const other = document.createElement("button");
+
+    other.type = "button";
+    other.id = "otherSubjectLink";
+    other.className = "sidebar-link subject-link hidden";
+    other.dataset.view = "biblioteca";
+    other.dataset.module = "__other__";
+
+    other.innerHTML =
+        '<span class="sidebar-icon">📂</span>' +
+        '<span class="subject-link-name">Sin clasificar</span>' +
+        '<span class="subject-link-count">0</span>';
+
+    nav.appendChild(other);
+}
+
+// Módulos que no son ninguna de las 8 asignaturas (archivos antiguos)
+function isOtherModule(moduleName) {
+
+    return !modules.some(function (m) { return m.name === moduleName; });
+}
+
+// Documentos de la asignatura seleccionada (dentro de la pestaña activa)
+function belongsToCurrentSubject(item) {
+
+    if (currentModule === "__other__") {
+        return isOtherModule(item.module);
+    }
+
+    return item.module === currentModule;
+}
+
+// Cabecera de la asignatura seleccionada (progreso, compartir, subir)
+function renderSubjectHeader(scoped) {
+
+    const box = document.getElementById("subjectHeader");
+
+    if (!box) {
+        return;
+    }
+
+    scoped = scoped || getScopedDocuments();
+
+    if (!currentModule) {
+
+        box.innerHTML = "";
 
         return;
     }
 
-    moduleRow.innerHTML = "";
+    const isOther = currentModule === "__other__";
+    const mod = modules.find(function (m) { return m.name === currentModule; });
+    const docs = scoped.filter(belongsToCurrentSubject);
+    const completed = docs.filter(function (d) { return d.completed === true; }).length;
+    const percent = docs.length ? Math.round((completed / docs.length) * 100) : 0;
 
-    modules.forEach(function (module) {
+    const title = isOther
+        ? "📂 Sin clasificar"
+        : (mod ? mod.icon + " " : "") + currentModule;
 
-        const card =
-            document.createElement("div");
+    box.innerHTML =
+        '<div class="subject-header-main">' +
+            '<h1>' + escapeHTML(title) + '</h1>' +
+            '<div class="module-progress subject-progress">' +
+                '<div class="module-progress-bar"><div class="module-progress-fill" style="width:' + percent + '%"></div></div>' +
+                '<span class="module-progress-text">' +
+                    (docs.length ? completed + ' / ' + docs.length + ' completados' : 'Sin documentos') +
+                '</span>' +
+            '</div>' +
+        '</div>' +
+        '<div class="subject-header-actions">' +
+            (isOther ? '' : '<button type="button" class="subject-share-button">👥 Compartir módulo</button>') +
+            '<button type="button" class="subject-upload-button">+ Subir archivo</button>' +
+        '</div>';
 
-        card.className = "module-card";
+    const shareButton = box.querySelector(".subject-share-button");
 
-        card.dataset.module =
-            module.name;
+    if (shareButton) {
+        shareButton.addEventListener("click", function () {
+            openShareModal({ scope: "module", module: currentModule });
+        });
+    }
 
-        card.innerHTML = `
-            <button type="button" class="module-share-button" title="Compartir módulo">
-                👥
-            </button>
-
-            <div class="module-icon">
-                ${module.icon}
-            </div>
-
-            <h3>
-                ${escapeHTML(module.name)}
-            </h3>
-
-            <div class="module-progress">
-
-                <div class="module-progress-bar">
-
-                    <div class="module-progress-fill"></div>
-
-                </div>
-
-                <span class="module-progress-text">
-                    Sin documentos
-                </span>
-
-            </div>
-        `;
-
-        card.addEventListener(
-            "click",
-            function () {
-
-                selectModule(
-                    module.name
-                );
-
-            }
-        );
-
-        card.querySelector(".module-share-button").addEventListener(
-            "click",
-            function (event) {
-
-                event.stopPropagation();
-
-                openShareModal({
-                    scope: "module",
-                    module: module.name
-                });
-
-            }
-        );
-
-        moduleRow.appendChild(card);
-
-        const filterOption =
-            document.createElement("option");
-
-        filterOption.value =
-            module.name;
-
-        filterOption.textContent =
-            module.name;
-
-        moduleFilter.appendChild(
-            filterOption
-        );
-
-        const uploadOption =
-            document.createElement("option");
-
-        uploadOption.value =
-            module.name;
-
-        uploadOption.textContent =
-            module.name;
-
-        uploadModule.appendChild(
-            uploadOption
-        );
-
-    });
+    box.querySelector(".subject-upload-button").addEventListener("click", openUploadModal);
 }
 
 // Documentos visibles según la pestaña activa
@@ -2652,77 +2676,34 @@ function getScopedDocuments() {
 
 function updateModuleProgress() {
 
-    const scoped = getScopedDocuments();
-
+    // Contadores del menú lateral: todo lo que puedes ver (tuyo + compartido)
     document
-        .querySelectorAll(".module-card")
-        .forEach(function (card) {
+        .querySelectorAll(".subject-link")
+        .forEach(function (link) {
 
-            const moduleName =
-                card.dataset.module;
+            const moduleName = link.dataset.module;
 
-            const docs =
-                scoped.filter(
-                    function (item) {
+            const count = documentsList.filter(function (item) {
 
-                        return (
-                            item.module ===
-                            moduleName
-                        );
+                return moduleName === "__other__"
+                    ? isOtherModule(item.module)
+                    : item.module === moduleName;
 
-                    }
-                );
+            }).length;
 
-            const fill =
-                card.querySelector(
-                    ".module-progress-fill"
-                );
+            const badge = link.querySelector(".subject-link-count");
 
-            const text =
-                card.querySelector(
-                    ".module-progress-text"
-                );
-
-            if (!fill || !text) {
-                return;
+            if (badge) {
+                badge.textContent = count;
             }
 
-            if (docs.length === 0) {
-
-                fill.style.width = "0%";
-
-                text.textContent =
-                    "Sin documentos";
-
-                return;
+            if (moduleName === "__other__") {
+                link.classList.toggle("hidden", count === 0);
             }
-
-            const completedCount =
-                docs.filter(
-                    function (item) {
-
-                        return (
-                            item.completed === true
-                        );
-
-                    }
-                ).length;
-
-            const percent =
-                Math.round(
-                    (completedCount / docs.length) * 100
-                );
-
-            fill.style.width =
-                percent + "%";
-
-            text.textContent =
-                completedCount +
-                " / " +
-                docs.length +
-                " completados";
 
         });
+
+    renderSubjectHeader(getScopedDocuments());
 }
 
 function setupEvents() {
@@ -2761,13 +2742,7 @@ function setupEvents() {
 
         openUpload.addEventListener(
             "click",
-            function () {
-
-                uploadModal.classList.add(
-                    "show"
-                );
-
-            }
+            openUploadModal
         );
 
     }
@@ -2882,70 +2857,202 @@ function setupEvents() {
 
 function selectModule(moduleName) {
 
-    currentModule =
-        moduleName;
+    const changed = (moduleName || "") !== currentModule;
 
-    const moduleFilter =
-        document.getElementById(
-            "moduleFilter"
-        );
+    currentModule = moduleName || "";
 
-    if (moduleFilter) {
+    // La búsqueda se limpia al cambiar de asignatura para no confundir
+    const searchInput = document.getElementById("searchInput");
 
-        moduleFilter.value =
-            moduleName;
+    if (searchInput) {
 
-    }
-
-    document
-        .querySelectorAll(
-            ".module-card"
-        )
-        .forEach(
-            function (card) {
-
-                if (
-                    card.dataset.module ===
-                    moduleName
-                ) {
-
-                    card.classList.add(
-                        "selected"
-                    );
-
-                } else {
-
-                    card.classList.remove(
-                        "selected"
-                    );
-
-                }
-
-            }
-        );
-
-    const subtitle =
-        document.getElementById(
-            "librarySubtitle"
-        );
-
-    if (subtitle) {
-
-        if (moduleName) {
-
-            subtitle.textContent =
-                moduleName;
-
-        } else {
-
-            subtitle.textContent =
-                "Todos tus documentos";
-
+        if (changed) {
+            searchInput.value = "";
         }
 
+        const label = currentModule === "__other__" ? "Sin clasificar" : currentModule;
+
+        searchInput.placeholder = label
+            ? "Buscar en " + label + "..."
+            : "Buscar apuntes, tema, módulo...";
     }
 
+    const subtitle = document.getElementById("librarySubtitle");
+
+    if (subtitle) {
+        subtitle.textContent =
+            currentModule === "__other__"
+                ? "Archivos sin asignatura reconocida"
+                : (currentModule || "Todos tus documentos");
+    }
+
+    renderSubjectHeader();
+
     renderDocuments();
+}
+
+// Abre el modal de subida. Si estás dentro de una asignatura de la
+// Biblioteca, queda fijada; si estás en "Todas", eliges tú la asignatura.
+function openUploadModal() {
+
+    const modal = document.getElementById("uploadModal");
+    const select = document.getElementById("uploadModule");
+    const group = document.getElementById("uploadModuleGroup");
+    const fixed = document.getElementById("uploadModuleFixed");
+    const libraryView = document.getElementById("view-biblioteca");
+
+    if (!modal || !select) {
+        return;
+    }
+
+    const inLibrary = libraryView && libraryView.classList.contains("active");
+
+    if (inLibrary && currentModule && currentModule !== "__other__") {
+
+        select.value = currentModule;
+
+        const mod = modules.find(function (m) { return m.name === currentModule; });
+
+        fixed.querySelector("strong").textContent =
+            (mod ? mod.icon + " " : "") + currentModule;
+
+        group.classList.add("hidden");
+        fixed.classList.remove("hidden");
+
+    } else {
+
+        select.value = "";
+
+        group.classList.remove("hidden");
+        fixed.classList.add("hidden");
+
+    }
+
+    refreshUploadTopics();
+
+    modal.classList.add("show");
+}
+
+// Rellena el selector de tema con los temas que ya tienes en la asignatura
+function refreshUploadTopics() {
+
+    const moduleName = document.getElementById("uploadModule").value;
+    const topicSelect = document.getElementById("uploadTopicSelect");
+    const topicInput = document.getElementById("topic");
+
+    if (!topicSelect || !topicInput) {
+        return;
+    }
+
+    topicSelect.innerHTML = "";
+
+    function addOption(value, label, disabled) {
+
+        const option = document.createElement("option");
+
+        option.value = value;
+        option.textContent = label;
+
+        if (disabled) {
+            option.disabled = true;
+        }
+
+        topicSelect.appendChild(option);
+    }
+
+    if (!moduleName) {
+
+        addOption("", "Elige primero una asignatura", true);
+        topicSelect.value = "";
+        topicInput.classList.add("hidden");
+        topicInput.value = "";
+
+        return;
+    }
+
+    const topics = [];
+
+    documentsList.forEach(function (item) {
+
+        const t = (item.topic || "").trim();
+
+        if (
+            item.owner_id === currentUser.id &&
+            item.module === moduleName &&
+            t &&
+            topics.indexOf(t) === -1
+        ) {
+            topics.push(t);
+        }
+
+    });
+
+    ["Exámenes", "Prácticas"].forEach(function (t) {
+
+        if (topics.indexOf(t) === -1) {
+            topics.push(t);
+        }
+
+    });
+
+    topics.sort(function (a, b) {
+        return a.localeCompare(b, "es", { numeric: true, sensitivity: "base" });
+    });
+
+    addOption("", "Selecciona un tema", true);
+
+    topics.forEach(function (t) {
+        addOption(t, t);
+    });
+
+    addOption("__new__", "➕ Nuevo tema...");
+
+    topicSelect.value = "";
+    topicInput.value = "";
+    topicInput.classList.add("hidden");
+}
+
+function getSelectedUploadTopic() {
+
+    const topicSelect = document.getElementById("uploadTopicSelect");
+    const topicInput = document.getElementById("topic");
+
+    if (!topicSelect) {
+        return topicInput ? topicInput.value.trim() : "";
+    }
+
+    if (topicSelect.value === "__new__") {
+        return topicInput.value.trim();
+    }
+
+    return topicSelect.value;
+}
+
+function setupUploadSubjectControls() {
+
+    const select = document.getElementById("uploadModule");
+    const topicSelect = document.getElementById("uploadTopicSelect");
+    const topicInput = document.getElementById("topic");
+
+    if (select) {
+        select.addEventListener("change", refreshUploadTopics);
+    }
+
+    if (topicSelect && topicInput) {
+
+        topicSelect.addEventListener("change", function () {
+
+            if (topicSelect.value === "__new__") {
+                topicInput.classList.remove("hidden");
+                topicInput.focus();
+            } else {
+                topicInput.classList.add("hidden");
+                topicInput.value = "";
+            }
+
+        });
+
+    }
 }
 
 function closeModal() {
@@ -3093,16 +3200,7 @@ function renderDocuments() {
     if (currentModule) {
 
         results =
-            results.filter(
-                function (item) {
-
-                    return (
-                        item.module ===
-                        currentModule
-                    );
-
-                }
-            );
+            results.filter(belongsToCurrentSubject);
 
     }
 
@@ -3199,12 +3297,150 @@ function renderDocuments() {
 
     grid.innerHTML = "";
 
+    // Agrupar por asignatura (las 8 oficiales primero; cualquier otro
+    // valor antiguo de "module" también se muestra para no perder archivos)
+    const byModule = new Map();
+
     results.forEach(
         function (item) {
 
-            grid.appendChild(
-                createDocumentCard(item)
+            const key = item.module || "Sin asignatura";
+
+            if (!byModule.has(key)) {
+                byModule.set(key, []);
+            }
+
+            byModule.get(key).push(item);
+
+        }
+    );
+
+    const order = modules.map(function (m) { return m.name; });
+
+    const moduleKeys = Array.from(byModule.keys()).sort(
+        function (a, b) {
+
+            const ia = order.indexOf(a);
+            const ib = order.indexOf(b);
+
+            if (ia !== -1 && ib !== -1) { return ia - ib; }
+            if (ia !== -1) { return -1; }
+            if (ib !== -1) { return 1; }
+
+            return a.localeCompare(b, "es");
+
+        }
+    );
+
+    moduleKeys.forEach(
+        function (moduleKey) {
+
+            const items = byModule.get(moduleKey);
+
+            const block = document.createElement("div");
+
+            block.className = "subject-block";
+
+            if (!currentModule || currentModule === "__other__") {
+
+                const mod = modules.find(function (m) { return m.name === moduleKey; });
+
+                const title = document.createElement("h2");
+
+                title.className = "subject-block-title";
+
+                title.textContent =
+                    (mod ? mod.icon + " " : "") +
+                    moduleKey +
+                    "  ·  " +
+                    items.length;
+
+                block.appendChild(title);
+            }
+
+            renderTopicGroups(block, moduleKey, items, search !== "");
+
+            grid.appendChild(block);
+
+        }
+    );
+}
+
+// Temas cerrados por el usuario (se recuerdan mientras no recargue la página)
+const closedTopics = new Set();
+
+function renderTopicGroups(container, moduleKey, items, forceOpen) {
+
+    const byTopic = new Map();
+
+    items.forEach(
+        function (item) {
+
+            const topic = (item.topic || "").trim() || "Sin tema";
+
+            if (!byTopic.has(topic)) {
+                byTopic.set(topic, []);
+            }
+
+            byTopic.get(topic).push(item);
+
+        }
+    );
+
+    const topics = Array.from(byTopic.keys()).sort(
+        function (a, b) {
+            return a.localeCompare(b, "es", { numeric: true, sensitivity: "base" });
+        }
+    );
+
+    topics.forEach(
+        function (topic) {
+
+            const docs = byTopic.get(topic);
+            const key = moduleKey + "||" + topic;
+
+            const details = document.createElement("details");
+
+            details.className = "topic-group";
+            details.open = forceOpen || !closedTopics.has(key);
+
+            details.addEventListener(
+                "toggle",
+                function () {
+
+                    if (forceOpen) {
+                        return;
+                    }
+
+                    if (details.open) {
+                        closedTopics.delete(key);
+                    } else {
+                        closedTopics.add(key);
+                    }
+
+                }
             );
+
+            const summary = document.createElement("summary");
+
+            summary.innerHTML =
+                '<span class="topic-group-title">📁 ' + escapeHTML(topic) + '</span>' +
+                '<span class="topic-group-count">' + docs.length + '</span>';
+
+            const inner = document.createElement("div");
+
+            inner.className = "document-grid";
+
+            docs.forEach(
+                function (item) {
+                    inner.appendChild(createDocumentCard(item));
+                }
+            );
+
+            details.appendChild(summary);
+            details.appendChild(inner);
+
+            container.appendChild(details);
 
         }
     );
@@ -3710,10 +3946,7 @@ async function uploadDocuments() {
             .value;
 
     const topic =
-        document
-            .getElementById("topic")
-            .value
-            .trim();
+        getSelectedUploadTopic();
 
     const type =
         document
@@ -3735,7 +3968,7 @@ async function uploadDocuments() {
     if (!moduleName) {
 
         status.textContent =
-            "Selecciona un módulo.";
+            "Selecciona una asignatura.";
 
         return;
     }
@@ -3743,7 +3976,7 @@ async function uploadDocuments() {
     if (!topic) {
 
         status.textContent =
-            "Escribe un tema.";
+            "Selecciona un tema o escribe uno nuevo.";
 
         return;
     }
